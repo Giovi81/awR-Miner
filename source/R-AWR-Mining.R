@@ -13,9 +13,6 @@
 #parseOverride <- c("SOME","OS-INFORMATION","MEMORY")
 #moveDoneOnlyOverride <- TRUE|FALSE | rm(moveDoneOnlyOverride)
 
-library(checkpoint)
-checkpoint("2015-05-01")
-
 library("futile.logger")
 library("ggplot2")
 library("plyr")
