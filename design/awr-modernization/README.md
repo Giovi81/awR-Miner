@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. These are scope decisions, not compatibility claims or authorization to modify runtime files.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. These are scope decisions, not compatibility claims or authorization to modify runtime files. Phase 0 is closed as a read-only repository and documentation assessment; live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
 
 ## Goal
 
@@ -18,7 +18,7 @@ Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and 
 - Defer the graphical interface to a later release; do not expand the current release into a GUI project.
 - Oracle database access is restricted to `SELECT` statements only. Do not issue DDL, DML, PL/SQL blocks, `ALTER SESSION`, or run the existing capture scripts.
 - Do not run the default Ant `build` target for routine analysis or validation. It changes source/release artifacts and includes Git operations.
-- Do not commit, tag, push, access a database, or make architectural changes without explicit authorization.
+- Do not commit, tag, push, access a database, or make architectural changes without explicit authorization. The approved Oracle access for this work remains `SELECT`-only; Phase 0 did not connect to either database.
 
 ## Initial Repository Anchors
 
@@ -43,17 +43,20 @@ The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixt
 - Inspect the active R parser, settings, SQL capture paths, documentation, Ant targets, and available fixtures.
 - Record the current dependency inventory and existing testable behavior.
 - Verify the latest stable R release against the R Project on the assessment date.
-- Verify the Oracle 19c CDB-level and PDB-level requirements against current Oracle primary documentation and the authorized test environments.
+- Verify the Oracle 19c CDB-level and PDB-level requirements against current Oracle primary documentation. Record the authorized test environments and defer their live `SELECT`-only checks to Phase 3.
 - Deliverable: a dated baseline and compatibility matrix that distinguishes verified facts, intended support, and untested hypotheses.
 - Acceptance: every version claim has an official source; each matrix cell identifies its evidence or its required test.
 - Risk and rollback: assessment is read-only; no source rollback is needed.
 
 ### 1. Reproducible test environment
 
-- Propose pinned Docker base images and dependency versions based on the assessed runtime and dependency inventory.
-- Keep credentials out of images and command history. Add repository Docker/Compose files only after the design is reviewed.
-- Acceptance: fixture-based checks run reproducibly in the container without Oracle access or host-side R installation.
-- Risk and rollback: keep container setup additive and retain the current script workflow; remove or revise only the newly proposed container artifacts if the approach is rejected.
+- Pin the initial fixture-smoke image to `r-base:4.6.1` at digest `sha256:198bf78cd85f5355173832ce3713921614c229752fcb4e0e7cb51b7713f745f7`.
+- First acceptance check: run base R with Docker networking disabled, mount the existing compressed fixture read-only, and verify its first line is `~~BEGIN-OS-INFORMATION~~`. This isolates the test from Oracle, CRAN, and host-side R.
+- The full parser's direct CRAN dependencies are not yet reproducibly pinned. Before parser tests, resolve the interaction between `checkpoint("2015-05-01")` and a project lockfile; then lock the complete direct and transitive dependency set rather than installing unversioned packages during image build.
+- Keep fixture inputs read-only and route generated files to a disposable writable directory. Keep credentials out of images and command history.
+- Add repository Docker/test files only after this design is reviewed. Do not change the runtime entrypoint or dependency mechanism as part of this environment proposal.
+- Acceptance: the base-R fixture check produces the same result on repeated runs without Oracle access, CRAN access, or host-side R installation; the later parser environment must restore only pinned dependencies.
+- Risk and rollback: keep container setup additive and retain the current script workflow; remove or revise only newly proposed container/test artifacts if the approach is rejected.
 
 ### 2. R parser and output validation
 
@@ -80,10 +83,11 @@ The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixt
 
 ## Decisions Before Implementation
 
-- Evaluate and choose a unified or separate SQL capture approach for CDB-level and PDB-level AWR.
-- Keep all Oracle interaction SELECT-only; no DDL, DML, PL/SQL, ALTER, or capture scripts are authorized.
-- Which phase should be approved for implementation after the baseline is reviewed?
+- Phase 0 is complete. Its evidence is a static repository/documentation assessment plus the documented base-R fixture smoke check; it does not establish full parser or Oracle compatibility.
+- Phase 1 implementation remains gated on review of the pinned Docker/dependency proposal. Keep runtime files unchanged until that review is approved.
+- Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts during Phase 3 design, after the authorized `SELECT`-only metadata checks. Do not run capture scripts or other non-SELECT database operations under the current authorization.
+- Keep the GUI deferred to a future release, as already agreed.
 
 ## Next Action
 
-Prepare the Phase 1 design for pinned R 4.6.1 containers and dependencies, and plan SELECT-only checks against the CDB and direct-PDB connections. Do not add runtime or container files until that design is reviewed; keep GUI work deferred.
+Phase 0 is closed. The next work item is review of the Phase 1 pinned-container and dependency proposal; only after approval should additive Docker/test setup be introduced. Keep runtime files unchanged, defer GUI work, and keep Oracle checks SELECT-only and separate from local fixture tests.

@@ -112,7 +112,8 @@ All checked on 2026-10-08:
 | Direct package list and dependency-management risks recorded | Complete as an initial inventory; transitive package closure and pinned versions remain for Phase 1. |
 | Existing fixtures and safe local evidence identified | Complete; one base-R compressed-fixture smoke check passed. Full parser/output test not run. |
 | Oracle objects, license gate, SQL*Plus constructs, and compatibility unknowns recorded | Complete by static inspection; exact least-privilege grants and database behavior remain unverified. |
-| Current R and Oracle documentation facts recorded | Complete; Oracle target choice and support claims remain pending user approval and tests. |
+| Current R and Oracle documentation facts recorded | Complete; R 4.6.1 and Oracle 19c scope are approved. Oracle runtime compatibility remains unverified and requires the separately scoped Phase 3 checks. |
+| Authorized Oracle test environments and access boundary recorded | Complete; the CDB and direct-PDB aliases are identified, but no connection or query was made during this read-only baseline. SELECT-only environment checks are assigned to Phase 3. |
 | Release automation hazards inspected | Complete; default Ant build must not be used for ordinary validation. |
 
 ## Decisions to Carry Forward
@@ -121,4 +122,4 @@ All checked on 2026-10-08:
 2. Oracle Database 19c CDB-level and PDB-level AWR are both in scope. Evaluate unified versus separate capture scripts without changing SQL until a design is reviewed.
 3. The current script workflow remains for this release; GUI work is deferred.
 4. The user identified authorized test aliases `DBI_CGEMS401` (CDB) and `DBI_CGEMS401_PGEMS4` (direct PDB), with saved credentials and required licenses. Database commands remain SELECT-only; confirm read access through those queries and do not run capture scripts.
-5. Approve a Phase 1 container/dependency design before adding Docker or dependency files.
+5. Review and approve the Phase 1 container/dependency design before adding Docker or dependency files. This baseline does not authorize runtime, dependency, or container changes.
