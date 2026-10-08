@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. The Phase 1 base-R fixture smoke environment is implemented and verified; see [phase-1-test-environment.md](phase-1-test-environment.md). The full parser dependency lock and test remain a Phase 2 prerequisite. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. These are scope decisions, not compatibility claims. Live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment is complete; see [phase-1-test-environment.md](phase-1-test-environment.md) for the pinned command and results. These checks do not establish parser or Oracle compatibility. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
 
 ## Goal
 
@@ -38,7 +38,7 @@ The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixt
 
 ## Phase 1 Result
 
-The base-R smoke assertion is now maintained at `tests/phase1-smoke.R` and runs in the pinned R 4.6.1 image with Docker networking disabled and the repository mounted read-only. Its reproducible command and result are recorded in [phase-1-test-environment.md](phase-1-test-environment.md). This check does not exercise parser dependencies. The `checkpoint` package required by the current entrypoint is absent from the current CRAN index, so the parser dependency strategy and complete lockfile must be resolved before Phase 2 parser tests.
+The repository smoke assertion at `tests/phase1-smoke.R` runs with base R in the digest-pinned R 4.6.1 image, with Docker networking disabled and the repository mounted read-only. It passed twice with the expected fixture marker. This does not test parser dependencies or generated outputs. The parser dependency lock and fixture-backed parser tests remain Phase 2 work; Oracle checks remain Phase 3 work.
 
 ## Work Sequence
 
@@ -55,11 +55,11 @@ The base-R smoke assertion is now maintained at `tests/phase1-smoke.R` and runs 
 ### 1. Reproducible test environment
 
 - Pin the initial fixture-smoke image to `r-base:4.6.1` at digest `sha256:198bf78cd85f5355173832ce3713921614c229752fcb4e0e7cb51b7713f745f7`.
-- First acceptance check: run base R with Docker networking disabled, mount the existing compressed fixture read-only, and verify its first line is `~~BEGIN-OS-INFORMATION~~`. This isolates the test from Oracle, CRAN, and host-side R.
+- First acceptance check: run base R with Docker networking disabled, mount the existing compressed fixture read-only, and verify its first line is `~~BEGIN-OS-INFORMATION~~`. This isolates the test from Oracle, CRAN, and host-side R. The assertion is maintained in `tests/phase1-smoke.R` and passed twice using the pinned image.
 - The full parser's direct CRAN dependencies are not yet reproducibly pinned. Before parser tests, resolve the interaction between `checkpoint("2015-05-01")` and a project lockfile; then lock the complete direct and transitive dependency set rather than installing unversioned packages during image build.
 - Keep fixture inputs read-only and route generated files to a disposable writable directory. Keep credentials out of images and command history.
-- The additive base-R fixture test is implemented after the Phase 1 design was approved. Do not change the runtime entrypoint or dependency mechanism as part of this smoke environment.
-- Acceptance: the base-R fixture check passes without Oracle access, CRAN access, or host-side R installation. Before parser tests, the Phase 2 environment must restore only pinned dependencies.
+- The base-R fixture check is complete. Do not change the runtime entrypoint or dependency mechanism as part of Phase 1.
+- Acceptance: the base-R fixture check produced the same result on repeated runs without Oracle access, CRAN access, or host-side R installation. The later parser environment must restore only pinned dependencies.
 - Risk and rollback: keep container setup additive and retain the current script workflow; remove or revise only newly proposed container/test artifacts if the approach is rejected.
 
 ### 2. R parser and output validation
@@ -88,10 +88,10 @@ The base-R smoke assertion is now maintained at `tests/phase1-smoke.R` and runs 
 ## Decisions Before Implementation
 
 - Phase 0 is complete. Its evidence is a static repository/documentation assessment plus the documented base-R fixture smoke check; it does not establish full parser or Oracle compatibility.
-- Phase 1 base-R smoke implementation is complete and leaves runtime files unchanged. The parser dependency design remains open: resolve the retired `checkpoint` mechanism and produce a complete pinned dependency lock before parser tests in Phase 2.
+- Phase 1's pinned, offline base-R fixture smoke check is complete and leaves runtime files unchanged. Resolve the parser dependency strategy and add fixture-backed parser checks in Phase 2.
 - Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts during Phase 3 design, after the authorized `SELECT`-only metadata checks. Do not run capture scripts or other non-SELECT database operations under the current authorization.
 - Keep the GUI deferred to a future release, as already agreed.
 
 ## Next Action
 
-Phases 0 and 1 base-R smoke acceptance are closed. Phase 2 starts by deciding how to isolate the retired `checkpoint` behavior in a reproducible test environment, then locks dependencies and establishes fixture-backed parser checks. Keep runtime files unchanged unless a separately reviewed parser fix requires it, defer GUI work, and keep Oracle checks SELECT-only and separate from local fixture tests.
+Phases 0 and 1 are complete. Phase 2 starts by resolving the retired `checkpoint` behavior, pinning the full parser dependency set, and establishing fixture-backed parser checks. Keep Oracle checks SELECT-only and separate from local fixture tests; the GUI remains deferred.
