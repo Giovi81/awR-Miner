@@ -22,7 +22,9 @@ library("reshape")
 library("xtable")
 library("ggthemes")
 library("stringr")
+perl <- stringr::regex
 library("data.table")
+melt <- reshape::melt
 library("lubridate")
 library("gplots")
 library("gtools")
@@ -920,7 +922,7 @@ getSectionInt <- function(inFile,blockName,decSep='.',searchPatternIn=NULL,repla
   beginBlock <- paste0('~~[ ]*BEGIN-',blockName,'[ ]*~~')
   endBlock <- paste0('~~[ ]*END-',blockName,'[ ]*~~')
   thePattern <- paste0(beginBlock,'(.*)',endBlock)
-  body <- str_extract(inFile, thePattern)
+  body <- str_extract(inFile, regex(thePattern, dotall = TRUE))
   #print(str(body))
   if(is.na(body)){
     flog.debug(paste0("getSection - ",blockName," - section not in capture"),name="getSection")
@@ -1027,7 +1029,7 @@ getTheSection <- function(inFile,blockName){
   beginBlock <- paste0('~~[ ]*BEGIN-',blockName,'[ ]*~~')
   endBlock <- paste0('~~[ ]*END-',blockName,'[ ]*~~')
   thePattern <- paste0(beginBlock,'(.*)',endBlock)
-  body <- str_extract(inFile, thePattern)
+  body <- str_extract(inFile, regex(thePattern, dotall = TRUE))
   body <- gsub('\r\n', '\n', body)
   body <- gsub('\n\n', '\n', body)
   #
@@ -1814,7 +1816,7 @@ plot_summary_boxplot_main <- function(){
   
   p <- ggplot(data=x.melt, aes(x=id, y=value),aes(fill=variable),position="dodge")+
     geom_violin(aes(),fill="#4DAF4A",colour="#000000",size=0.05,alpha=0.6,adjust=0.5) +
-    geom_boxplot(aes(),colour="#000000",alpha=.6,show_guide=FALSE,notch = FALSE,outlier.colour = "orange", outlier.size = 1,outlier.alpha=.4,outlier.shape=5)+
+    geom_boxplot(aes(),colour="#000000",alpha=.6,show.legend=FALSE,notch = FALSE,outlier.colour = "orange", outlier.size = 1,outlier.alpha=.4,outlier.shape=5)+
     attr$themeScaleColour+attr$themeScaleFill+
     #geom_jitter(alpha=.2,size=1,position = position_jitter(width = .2,height=0),aes(colour="gray"))+
     geom_text(data=median_vals,aes(y=value,label=round(value,1)),alpha=0.8,size=2,vjust=-0.8,hjust=0)+
@@ -1826,7 +1828,7 @@ plot_summary_boxplot_main <- function(){
     #scale_y_continuous(breaks=seq(0, 8000, 500),minor=seq(0, 8000, 100))+
     theme(text =               element_text(size=5),
           axis.title.x  = element_blank(),axis.title.y  = element_blank(),
-          legend.position="none",axis.text.x= element_blank(),
+          legend.position="none",
           plot.background = element_rect(fill = "#8EB3BD"),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(colour="#436974"),axis.text.y = element_text(colour="#436974"),
@@ -2211,7 +2213,7 @@ plot_IO_by_object_type <- function(DF_IO_BY_OBJECT_TYPE_INT){
   p <- ggplot() +
     geom_line(data=io.melt,aes(x=end, y=value,colour=OBJECT_TYPE,group=OBJECT_TYPE), size=.5,alpha=0.8)+
     geom_point(data=max_vals, aes(x=end, y=value, colour=OBJECT_TYPE,group=OBJECT_TYPE), size=2, shape=21)+
-    geom_text(data=max_vals, aes(x=end, y=value, colour=OBJECT_TYPE,label=label,group=OBJECT_TYPE),size=2.5, vjust=0.5, hjust=1.6,show_guide  = FALSE)+
+    geom_text(data=max_vals, aes(x=end, y=value, colour=OBJECT_TYPE,label=label,group=OBJECT_TYPE),size=2.5, vjust=0.5, hjust=1.6,show.legend = FALSE)+
     #     ylab('')+
     facet_grid(variable ~ .,scales="free_y")+
     attr$themeScaleColour+attr$themeScaleFill+
@@ -3718,7 +3720,7 @@ main$mainFunction <- function(f){
     debugVars$main <- main
     save(debugVars,file=paste(outFileName,"-debugVars.Rda",sep=""))
     if(okToPrintPlot('snapshots_html')){
-      sjt.df(main$DF_SNAP_ID_DATE,file=paste0(outFileName,"-snapshots.html"),describe=FALSE,alternateRowColors=TRUE)
+      print(sjPlot::tab_df(main$DF_SNAP_ID_DATE,file=paste0(outFileName,"-snapshots.html"),alternate.rows=TRUE,use.viewer=FALSE))
     }
     
     if(exists("dumpCSV")){
@@ -3821,10 +3823,18 @@ main$mainFunction <- function(f){
   
   if(okToPrintPlot('page1')){ 
     box_plots <- plot_summary_boxplot_main()
-    tblText <- tableGrob(main$DF_SUMMARY_OS,show.rownames = FALSE, gpar.coretext = gpar(fontsize=12),gpar.coltext = gpar(fontsize=8),padding.v = unit(1, "mm"),padding.h = unit(2, "mm"),show.colnames = TRUE,col.just = "left")
-    tblText2 <- tableGrob(main$DF_SUMMARY_MAIN,show.rownames = FALSE, gpar.coretext = gpar(fontsize=10),gpar.coltext = gpar(fontsize=8),padding.v = unit(1, "mm"),padding.h = unit(2, "mm"),show.colnames = TRUE,col.just = "left")
+    tblText <- tableGrob(main$DF_SUMMARY_OS, rows = NULL,
+               theme = ttheme_default(base_size = 8, padding = unit(c(1, 2), "mm"),
+                          core = list(fg_params = list(fontsize = 12, hjust = 0, x = 0.01)),
+                          colhead = list(fg_params = list(fontsize = 8, hjust = 0, x = 0.01))))
+    tblText2 <- tableGrob(main$DF_SUMMARY_MAIN, rows = NULL,
+                theme = ttheme_default(base_size = 8, padding = unit(c(1, 2), "mm"),
+                           core = list(fg_params = list(fontsize = 10, hjust = 0, x = 0.01)),
+                           colhead = list(fg_params = list(fontsize = 8, hjust = 0, x = 0.01))))
     
-    tblText3 <- tableGrob(DF_HOSTS_INT,show.rownames = FALSE, gpar.coretext = gpar(fontsize=8),gpar.coltext = gpar(fontsize=8),padding.v = unit(1, "mm"),padding.h = unit(2, "mm"),show.colnames = FALSE,col.just = "left")
+    tblText3 <- tableGrob(DF_HOSTS_INT, rows = NULL, cols = NULL,
+                theme = ttheme_default(base_size = 8, padding = unit(c(1, 2), "mm"),
+                           core = list(fg_params = list(fontsize = 8, hjust = 0, x = 0.01))))
   }
     
   
@@ -4241,7 +4251,7 @@ main$mainLoop <- function(){
     #if(nrow(SUMMARY_DF_TMP)>1){
       SUMMARY_DF_TMP <- SUMMARY_DF_TMP[order(SUMMARY_DF_TMP$aas,decreasing = TRUE),]
     #}
-    sjt.df(SUMMARY_DF_TMP,file=paste0("summary.html"),describe=FALSE,alternateRowColors=TRUE)
+    print(sjPlot::tab_df(SUMMARY_DF_TMP,file=paste0("summary.html"),alternate.rows=TRUE,use.viewer=FALSE))
     rm(SUMMARY_DF_TMP)
   #}
   
