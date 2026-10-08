@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. These are scope decisions, not compatibility claims or authorization to modify runtime files. Phase 0 is closed as a read-only repository and documentation assessment; live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. The Phase 1 base-R fixture smoke environment is implemented and verified; see [phase-1-test-environment.md](phase-1-test-environment.md). The full parser dependency lock and test remain a Phase 2 prerequisite. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. These are scope decisions, not compatibility claims. Live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
 
 ## Goal
 
@@ -36,6 +36,10 @@ The read-only baseline is complete. It records the current R release fact, activ
 
 The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixture inside Docker. Full parser, plot, SQL*Plus, and Oracle integration checks were not run.
 
+## Phase 1 Result
+
+The base-R smoke assertion is now maintained at `tests/phase1-smoke.R` and runs in the pinned R 4.6.1 image with Docker networking disabled and the repository mounted read-only. Its reproducible command and result are recorded in [phase-1-test-environment.md](phase-1-test-environment.md). This check does not exercise parser dependencies. The `checkpoint` package required by the current entrypoint is absent from the current CRAN index, so the parser dependency strategy and complete lockfile must be resolved before Phase 2 parser tests.
+
 ## Work Sequence
 
 ### 0. Baseline assessment
@@ -54,8 +58,8 @@ The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixt
 - First acceptance check: run base R with Docker networking disabled, mount the existing compressed fixture read-only, and verify its first line is `~~BEGIN-OS-INFORMATION~~`. This isolates the test from Oracle, CRAN, and host-side R.
 - The full parser's direct CRAN dependencies are not yet reproducibly pinned. Before parser tests, resolve the interaction between `checkpoint("2015-05-01")` and a project lockfile; then lock the complete direct and transitive dependency set rather than installing unversioned packages during image build.
 - Keep fixture inputs read-only and route generated files to a disposable writable directory. Keep credentials out of images and command history.
-- Add repository Docker/test files only after this design is reviewed. Do not change the runtime entrypoint or dependency mechanism as part of this environment proposal.
-- Acceptance: the base-R fixture check produces the same result on repeated runs without Oracle access, CRAN access, or host-side R installation; the later parser environment must restore only pinned dependencies.
+- The additive base-R fixture test is implemented after the Phase 1 design was approved. Do not change the runtime entrypoint or dependency mechanism as part of this smoke environment.
+- Acceptance: the base-R fixture check passes without Oracle access, CRAN access, or host-side R installation. Before parser tests, the Phase 2 environment must restore only pinned dependencies.
 - Risk and rollback: keep container setup additive and retain the current script workflow; remove or revise only newly proposed container/test artifacts if the approach is rejected.
 
 ### 2. R parser and output validation
@@ -84,10 +88,10 @@ The only runtime check was a read-only R 4.6.1 smoke test of one compressed fixt
 ## Decisions Before Implementation
 
 - Phase 0 is complete. Its evidence is a static repository/documentation assessment plus the documented base-R fixture smoke check; it does not establish full parser or Oracle compatibility.
-- Phase 1 implementation remains gated on review of the pinned Docker/dependency proposal. Keep runtime files unchanged until that review is approved.
+- Phase 1 base-R smoke implementation is complete and leaves runtime files unchanged. The parser dependency design remains open: resolve the retired `checkpoint` mechanism and produce a complete pinned dependency lock before parser tests in Phase 2.
 - Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts during Phase 3 design, after the authorized `SELECT`-only metadata checks. Do not run capture scripts or other non-SELECT database operations under the current authorization.
 - Keep the GUI deferred to a future release, as already agreed.
 
 ## Next Action
 
-Phase 0 is closed. The next work item is review of the Phase 1 pinned-container and dependency proposal; only after approval should additive Docker/test setup be introduced. Keep runtime files unchanged, defer GUI work, and keep Oracle checks SELECT-only and separate from local fixture tests.
+Phases 0 and 1 base-R smoke acceptance are closed. Phase 2 starts by deciding how to isolate the retired `checkpoint` behavior in a reproducible test environment, then locks dependencies and establishes fixture-backed parser checks. Keep runtime files unchanged unless a separately reviewed parser fix requires it, defer GUI work, and keep Oracle checks SELECT-only and separate from local fixture tests.
