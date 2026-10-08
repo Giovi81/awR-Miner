@@ -136,3 +136,4 @@ test-cases/*.csv
 test-cases/*.err
 .Rhistory
 .Rproj.user
+.github/
