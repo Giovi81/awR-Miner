@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 started on 2026-10-09; its static review, SQL*Plus route, and read-only test protocol are recorded in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). MCP failed during initialization with `ORA-01950`; local SQL*Plus 19.3 is installed but cannot resolve the approved LDAP aliases with its current Oracle Net configuration. CDB and PDB checks remain outstanding. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Database checks remain limited to authorized `SELECT` statements.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 checks on 2026-10-09 connected successfully through MCP to the approved 19c CDB and PDB targets, and the capture SQL's AWR view references were queryable. End-to-end capture remains pending because each scope has only one snapshot and PDB automatic AWR snapshots are disabled; details are in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
 
 ## Goal
 
@@ -16,7 +16,7 @@ Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and 
 - Preserve the AWR Diagnostic Pack license check. Identify and document required Oracle privileges and licensed views before claiming capture compatibility.
 - CDB-level and PDB-level AWR are both required on Oracle Database 19c; assess separate capture scripts as a design option.
 - Defer the graphical interface to a later release; do not expand the current release into a GUI project.
-- Oracle database access is restricted to `SELECT` statements only. Do not issue DDL, DML, PL/SQL blocks, `ALTER SESSION`, or run the existing capture scripts.
+- Phase 0's SELECT-only boundary was replaced on 2026-10-09 by the user's authorization for unrestricted testing on the dedicated `LOCAL_ORCL` and `LOCAL_PDB1` targets. No database settings or data were changed during the initial Phase 3 checks.
 - Do not run the default Ant `build` target for routine analysis or validation. It changes source/release artifacts and includes Git operations.
 - Do not commit, tag, push, access a database, or make architectural changes without explicit authorization. The approved Oracle access for this work remains `SELECT`-only; Phase 0 did not connect to either database.
 
@@ -76,9 +76,9 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 ### 3. SQL*Plus and Oracle compatibility
 
 - Review capture SQL, SQL*Plus assumptions, AWR views/columns, version guards, privileges, and Diagnostic Pack licensing.
-- Evaluate the CDB and direct-PDB paths using `SELECT`-only checks from local SQL*Plus after approved Oracle Net connect identifiers are configured for both targets; decide whether capture should remain unified or use separate SQL scripts.
-- The user confirms these environments have the required licenses and saved credentials. Do not run the existing capture scripts: they contain non-SELECT operations. Keep read-only database checks separate from local fixture tests.
-- Acceptance: document what the approved SELECT-only checks establish for each 19c container scope; do not claim end-to-end capture compatibility without executing the capture path under separately authorized operations.
+- Evaluate the CDB and direct-PDB paths using the authorized Oracle checks after approved connections are available for both targets; decide whether capture should remain unified or use separate SQL scripts.
+- The user confirms these environments are dedicated for testing and have the required licenses and saved credentials. Run the capture separately in CDB and PDB scope only after each has enough AWR snapshots; keep database-generated capture validation separate from local fixture tests.
+- Acceptance: document what the authorized checks establish for each 19c container scope; do not claim end-to-end capture compatibility without executing and validating the capture path.
 - Risk and rollback: avoid database changes; keep capture-script modifications narrow and reversible, and do not run integration checks without authorization.
 
 ### 4. Documentation and release packaging
@@ -98,4 +98,4 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 ## Next Action
 
-Phases 0, 1, and 2 are complete. Phase 3 will use local SQL*Plus rather than MCP. First obtain an approved EZCONNECT descriptor/TNS alias for each target or configure Oracle Net LDAP resolution; then run the authorized `SELECT`-only metadata and AWR visibility checks against both Oracle 19c targets and record the evidence in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Do not make database grants or run capture scripts or other non-SELECT operations; keep the GUI deferred.
+Phases 0, 1, and 2 are complete. 
