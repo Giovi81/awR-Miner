@@ -13,6 +13,39 @@ On 2026-10-09, the SQLcl MCP connection attempt for `DBI_CGEMS401` failed with `
 
 Ask the database/tooling administrator to investigate the MCP connection initialization and its tablespace requirement. Do not issue a quota/grant change from this project or retry database checks until that setup issue is resolved. No credentials are stored in this document.
 
+### SQL Developer Comparison (User-Provided)
+
+The user confirmed that SQL Developer connects successfully and returned these session identities:
+
+| Connection | User | Service | Container | `CON_ID` | `DBA` role |
+| --- | --- | --- | --- | ---: | --- |
+| CDB | `C##GU_DBA` | `CGEMS401.generali.it` | `CDB$ROOT` | 1 | Present |
+| Direct PDB | `GU_DBA` | `pgems4.generali.it` | `PGEMS4` | 3 | Present |
+
+In both sessions, `SESSION_PRIVS` returned no row for `UNLIMITED TABLESPACE`, and `USER_TS_QUOTAS` returned no rows. This is consistent with an account that has no explicit tablespace quota and no unlimited-tablespace system privilege. It does not explain a failure of a pure `SELECT`: reading AWR views does not allocate segments in `USERS`. The SQL Developer results demonstrate that interactive connections to both targets work, but they do not prove that MCP uses the same initialization path, client identity, or connection hooks. The MCP `ORA-01950` therefore points to an allocation attempt during MCP connection setup or a database-side hook, not a quota requirement of the planned read-only checks. The exact statement and component remain unknown; do not grant quota merely to make the error disappear.
+
+To narrow the source, have the DBA inspect the MCP-side error/log at the reported line and, from SQL Developer, use read-only metadata queries to check database logon triggers and the MCP logging object:
+
+```sql
+SELECT owner, trigger_name, triggering_event, status
+FROM dba_triggers
+WHERE base_object_type = 'DATABASE'
+   AND UPPER(triggering_event) LIKE '%LOGON%'
+ORDER BY owner, trigger_name;
+
+SELECT owner, object_type, status
+FROM dba_objects
+WHERE object_name = 'DBTOOLS$MCP_LOG'
+ORDER BY owner, object_type;
+
+SELECT owner, table_name, tablespace_name
+FROM dba_tables
+WHERE table_name = 'DBTOOLS$MCP_LOG'
+ORDER BY owner;
+```
+
+If a logon trigger is present, review its source for client-specific branches and writes. If the logging object exists, identify which MCP operation writes it and whether its owner or the connected user is expected to allocate the segment. These checks may identify a cause, but no root cause is confirmed yet.
+
 ## Static Capture Review
 
 The active capture file is `source/awr_miner.sql`. It reads historical AWR data through `DBA_HIST_*` views, including `DBA_HIST_DATABASE_INSTANCE`, `DBA_HIST_SNAPSHOT`, `DBA_HIST_PARAMETER`, `DBA_HIST_OSSTAT`, `DBA_HIST_SGASTAT`, `DBA_HIST_PGASTAT`, `DBA_HIST_SYSMETRIC_SUMMARY`, `DBA_HIST_SGA_TARGET_ADVICE`, `DBA_HIST_PGA_TARGET_ADVICE`, `DBA_HIST_DATAFILE`, `DBA_HIST_TBSPC_SPACE_USAGE`, `DBA_HIST_SYSTEM_EVENT`, `DBA_HIST_SYS_TIME_MODEL`, `DBA_HIST_EVENT_HISTOGRAM`, `DBA_HIST_SYSSTAT`, `DBA_HIST_SEG_STAT_OBJ`, `DBA_HIST_SEG_STAT`, `DBA_HIST_IOSTAT_FUNCTION`, `DBA_HIST_SQLSTAT`, and `DBA_HIST_SQLTEXT`. It also references `DBA_CPU_USAGE_STATISTICS`, `SYS.GV_$DATABASE`, `V$PDBS`, and `SYS.DBA_TAB_STATISTICS`.
@@ -69,8 +102,9 @@ Together, checks 1-4 establish the visible connection identity, test selected ve
 
 | Check | CDB | Direct PDB |
 | --- | --- | --- |
-| Connection established | Blocked: `ORA-01950` during MCP connection initialization | Not attempted |
-| Session/container identity | Not tested | Not tested |
+| SQL Developer session identity | Confirmed: `C##GU_DBA`, `CGEMS401.generali.it`, `CDB$ROOT`, `CON_ID=1` | Confirmed: `GU_DBA`, `pgems4.generali.it`, `PGEMS4`, `CON_ID=3` |
+| SQL Developer session role | `DBA` present; no `UNLIMITED TABLESPACE` row or explicit user quota row | `DBA` present; no `UNLIMITED TABLESPACE` row or explicit user quota row |
+| MCP connection established | Blocked: `ORA-01950` during initialization | Not attempted |
 | AWR view access and column compatibility | Not tested | Not tested |
 | Visible database IDs and snapshot container scope | Not tested | Not tested |
 | Capture execution / SQL*Plus behavior | Not authorized; not tested | Not authorized; not tested |
