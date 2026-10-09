@@ -1,7 +1,7 @@
 # Phase 3 SQL*Plus and Oracle 19c Compatibility
 
 **Assessment date:** 2026-10-09  
-**Status:** In progress; both MCP connections work and metadata checks passed. End-to-end capture is waiting for additional AWR snapshots; the user reports enabling automatic PDB snapshots in `PDB1`, pending verification.
+**Status:** In progress; metadata checks passed on 2026-10-09 for both approved targets. The reported settings are verified and each scope now exposes 20 snapshots. End-to-end capture and parser validation are still pending.
 
 ## Scope and Authorization
 
@@ -20,24 +20,24 @@ Checks used the configured SQLcl MCP connections. Local SQL*Plus is installed at
 | NLS language | AMERICAN | AMERICAN |
 | MCP autocommit | OFF | OFF |
 | DBID / database | 1773986901 / ORCL | 1773986901 / ORCL |
-| AWR snapshots | 1 (snap ID 1; `CON_ID=0`) | 1 (snap ID 1; `CON_ID=0`) |
+| AWR snapshots visible to capture | 20 (snap IDs 1-20; `CON_ID=0`) | 20 (snap IDs 1-20; `CON_ID=0`) |
+| Latest snapshot end time | 2026-10-09 21:50:57 | 2026-10-09 21:50:57 |
 
-The capture SQL references 21 AWR or statistics views. A combined query against all 21 completed without access or object errors in both containers. It returned a row from all 21 in the CDB and 17 in the PDB; the other four PDB views were empty, not inaccessible. `CDB_HIST_SNAPSHOT` in the CDB likewise reports only the `CON_ID=0` snapshot.
+Both MCP sessions used `SYSTEM`, reported Oracle 19.3.0.0.0 in READ WRITE mode, NLS language AMERICAN, and autocommit OFF. The capture SQL references 21 AWR or statistics views. A combined query against all 21 completed without access or object errors in both containers. It returned a row from all 21 in the CDB and 17 in the PDB; the other four PDB views were empty, not inaccessible.
 
-The initial CDB check found `DBA_HIST_WR_CONTROL` set to a 60-minute snapshot interval, 8-hour retention, and default Top SQL setting. The initial query of `AWR_PDB_AUTOFLUSH_ENABLED` in the CDB returned `FALSE`. Oracle documents `FALSE` as the default, which disables automatic AWR snapshots for PDBs; the parameter may also be set per PDB.
+The refreshed CDB check found `DBA_HIST_WR_CONTROL` set to a 10-minute snapshot interval and 24-hour retention for DBID `1773986901`. In `CDB$ROOT`, `AWR_PDB_AUTOFLUSH_ENABLED` remains `FALSE`; this is the root-level value and does not report the PDB-specific setting.
 
-After those checks, the user reported changing the snapshot interval to 10 minutes, retention to 24 hours, and setting `AWR_PDB_AUTOFLUSH_ENABLED=TRUE` on `PDB1`. These updates have not yet been re-read through MCP, and no new snapshots have yet been observed. The reported PDB-level change is distinct from the earlier value read in `CDB$ROOT`.
+The direct `PDB1` check confirmed `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`. `DBA_HIST_DATABASE_INSTANCE` exposed DBID `1773986901`, and `DBA_HIST_SNAPSHOT` returned 20 snapshots for that DBID. This is the DBID and snapshot count the capture script uses in the direct-PDB connection. `CDB_HIST_SNAPSHOT` in the CDB reports the corresponding 20 root snapshots.
 
 ## Assessment
 
-The 19c endpoints, services, AWR dictionary access, and queryability of the capture script's referenced views are verified. These checks do not establish that the complete capture script runs or that generated output parses correctly.
+The 19c endpoints, services, AWR dictionary access, queryability of the capture script's referenced views, updated snapshot settings, and sufficient snapshot counts are verified. These checks do not establish that the complete capture script runs or that generated output parses correctly.
 
-`source/awr_miner.sql` explicitly exits when a DBID has two or fewer snapshots. Both targets exposed only one snapshot at the last check, so running the capture then would stop before producing a valid capture. The user has since reported enabling automatic snapshots for `PDB1`; verify the setting and wait for at least three snapshots in each scope before running capture. No SQL capture script was run during the initial checks.
+`source/awr_miner.sql` exits when the selected DBID has two or fewer snapshots. Both approved targets now expose 20 snapshots for the DBID selected by the script, so the snapshot-count precondition is met. No capture script has been run yet.
 
 ## Remaining Work
 
-- Recheck the reported 10-minute interval, 24-hour retention, and `PDB1` autoflush setting through MCP; wait until each scope has at least three snapshots.
-- Run the capture separately from `CDB$ROOT` and `PDB1` once each scope has sufficient snapshots; retain the output files and validate them with the Phase 2 parser checks.
+- Run `source/awr_miner.sql` separately from `CDB$ROOT` and `PDB1`; retain each generated output file and validate it with the Phase 2 parser checks.
 - Record any SQL*Plus-specific behavior and decide whether one capture script can serve both scopes or separate scripts are needed.
 
 ## Sources
