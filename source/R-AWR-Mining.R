@@ -2398,11 +2398,11 @@ plot_io_histograms <- function(DF_IO_WAIT_HIST_INT){
   end.fill <- unique(DF_IO_WAIT_HIST_INT %>% select(SNAP_ID,end))
   
   # Join in WAIT_CLASS and end
-  vals <- left_join(tbl_dt(vals),wait.class.fill,copy = TRUE,by=c("EVENT_NAME"))
-  vals <- left_join(tbl_dt(vals),end.fill,copy = TRUE,by=c("end"))
+  vals <- left_join(data.table(vals),wait.class.fill,copy = TRUE,by=c("EVENT_NAME"))
+  vals <- left_join(data.table(vals),end.fill,copy = TRUE,by=c("end"))
   
   # Join vals to our original frame so we have original plus missing rows
-  DF_IO_WAIT_HIST_INT <- left_join(tbl_dt(vals),DF_IO_WAIT_HIST_INT)
+  DF_IO_WAIT_HIST_INT <- left_join(data.table(vals),DF_IO_WAIT_HIST_INT)
   # Set value of WAIT_COUNT in new (missing) rows to zero
   DF_IO_WAIT_HIST_INT[is.na(DF_IO_WAIT_HIST_INT$WAIT_COUNT)]$WAIT_COUNT <- 0
   
