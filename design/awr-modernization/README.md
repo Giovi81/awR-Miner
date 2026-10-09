@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 checks on 2026-10-09 verified both approved 19c targets, queryability of the capture SQL's AWR views, a 10-minute interval and 24-hour retention in the CDB, `AWR_PDB_AUTOFLUSH_ENABLED=TRUE` in `PDB1`, and 20 available snapshots in both scopes. End-to-end capture and parser validation remain pending. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 verified PDB1's reported 10-minute interval, 24-hour retention, and `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`, but its visible snapshots all have `CON_ID=0`, and AWR system-event and sysmetric history views are empty there. A local CDB capture output covers snapshots 1-21 but omits the main-metrics and AAS blocks; the Docker parser therefore cannot complete. Root-scope metadata and a valid PDB-level capture remain to be checked. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
 
 ## Goal
 
@@ -93,9 +93,9 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 - Phase 0 is complete. Its evidence is a static repository/documentation assessment plus the documented base-R fixture smoke check; it does not establish full parser or Oracle compatibility.
 - Phase 1's pinned, offline base-R fixture smoke check and Phase 2's fixture-backed parser/output checks are complete. The Phase 2 result records a pre-existing parsed-table schema difference from the historical baseline.
-- Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts during Phase 3. The user has authorized unrestricted testing on both dedicated targets; capture has not yet been run.
+- Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts after root-scope checks and a complete capture are available.
 - Keep the GUI deferred to a future release, as already agreed.
 
 ## Next Action
 
-Phases 0, 1, and 2 are complete. Phase 3 metadata checks are complete and both targets meet the capture script's minimum snapshot-count precondition. Next, run and validate captures from `CDB$ROOT` and `PDB1`.
+Phases 0, 1, and 2 are complete. Phase 3 has verified the PDB parameter settings and identified missing AWR history data in the PDB plus missing AAS/main-metrics sections in the local CDB capture. The next step is to verify root-scope snapshots and history views, then determine why PDB-level history is not being populated before claiming end-to-end compatibility.
