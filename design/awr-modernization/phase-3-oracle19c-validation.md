@@ -1,7 +1,7 @@
 # Phase 3 SQL*Plus and Oracle 19c Compatibility
 
 **Assessment date:** 2026-10-09  
-**Status:** In progress; PDB1 parameter settings and current snapshot metadata were verified through MCP. The PDB-visible snapshot rows are all `CON_ID=0`, its AWR system-event and sysmetric-summary views are empty, and a local CDB capture omits main-metrics/AAS sections and fails parser validation. Root-scope recheck and PDB-level history validation remain open.
+**Status:** In progress; current CDB metadata and query results are verified through MCP. The older local CDB capture omits main-metrics/AAS sections and fails parser validation; a refreshed capture must be produced with SQL*Plus because the SQLcl MCP runner does not support this script's `SET UNDERLINE` and `REPHEADER` commands. PDB1 reports autoflush enabled but has not exposed PDB-scoped snapshot/event/metric history.
 
 ## Scope and Authorization
 
@@ -20,25 +20,27 @@ Checks used the configured SQLcl MCP connections. Local SQL*Plus is installed at
 | NLS language | AMERICAN | AMERICAN |
 | MCP autocommit | OFF | OFF |
 | DBID / database | 1773986901 / ORCL | 1773986901 / ORCL |
-| AWR snapshot rows in the latest direct query | Not rechecked in `CDB$ROOT`; local capture summary reports 21 rows, snap IDs 1-21 | 25 rows, snap IDs 1-25, all `CON_ID=0` |
+| AWR snapshots in latest direct query | 25 rows, snap IDs 1-25, `CON_ID=0`, zero errors | 25 rows, snap IDs 1-25, all `CON_ID=0` |
 
-The capture SQL references 21 AWR or statistics views. Earlier combined queries completed without access or object errors in both containers, returning a row from all 21 in the CDB and 17 in the PDB; the other four PDB views were empty. A fresh PDB1 check found zero rows in `DBA_HIST_SYSTEM_EVENT` and `DBA_HIST_SYSMETRIC_SUMMARY`. `DBA_HIST_SNAPSHOT` in that PDB returned 25 rows, all with `CON_ID=0`; these are not evidence of PDB-level AWR snapshots.
+The capture SQL references 21 AWR or statistics views. Earlier combined queries completed without access or object errors in both containers, returning a row from all 21 in the CDB and 17 in the PDB; the other four PDB views were empty. Current CDB checks found 3,013 rows in `DBA_HIST_SYSTEM_EVENT` and 4,025 rows in `DBA_HIST_SYSMETRIC_SUMMARY`. Running the capture's AAS query shape returned 253 grouped rows, and its selected main-metrics query returned 25 grouped rows for snapshots 1-25. In PDB1, the same two history views returned zero rows, and `DBA_HIST_SNAPSHOT` returned 25 rows all with `CON_ID=0`; these are not evidence of PDB-level AWR snapshots.
 
-The current PDB1 check verified `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`, a 10-minute interval, and 1440-minute retention. The last direct CDB check found `DBA_HIST_WR_CONTROL` set to a 60-minute interval and 8-hour retention, with `AWR_PDB_AUTOFLUSH_ENABLED=FALSE`; the root-scope settings need a fresh check because the user subsequently reported changing snapshot settings.
+The current CDB check found `DBA_HIST_WR_CONTROL` set to a 10-minute interval and 60-minute retention. `AWR_PDB_AUTOFLUSH_ENABLED=FALSE` in `CDB$ROOT`; Oracle documents that this value has no effect on root snapshots and that an individual PDB's value is honored. The current PDB1 check verified `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`, a 10-minute interval, and 1440-minute retention. Although that PDB-level setting is enabled, its visible history still contains no PDB-scoped rows.
 
-The local CDB capture file `awr-hist-1773986901-ORCL-0-21.out` reports snap IDs 1-21 and `ERROR_COUNT=0`, but it does not contain `MAIN-METRICS` or `AVERAGE-ACTIVE-SESSIONS` blocks. Running the active parser against it in the pinned R 4.6.1 Docker image failed because the missing AAS section leaves `DF_AAS_INT` without `WAIT_CLASS`; the later summary also has no AAS vector. This is an incomplete-capture/data-availability result, not proof of a general parser regression. The generated file is not committed because it contains database-derived AWR data.
+The local CDB capture file `awr-hist-1773986901-ORCL-0-21.out` reports snap IDs 1-21 and `ERROR_COUNT=0`, but it does not contain `MAIN-METRICS` or `AVERAGE-ACTIVE-SESSIONS` blocks. The active parser failed against that file because the missing AAS section leaves `DF_AAS_INT` without `WAIT_CLASS`; later summary generation also lacks an AAS vector. Current CDB queries now show those data are available, so the old output does not establish a general parser defect or current data absence. A refreshed capture and parser run remain necessary. The generated file is not committed because it contains database-derived AWR data.
+
+An attempt to execute `source/awr_miner.sql` through the SQLcl MCP runner stopped on SQL*Plus-specific commands (`SET UNDERLINE`, `REPHEADER`, and `REPFOOTER`). This does not establish SQL*Plus incompatibility; use the installed SQL*Plus 19.3 client for the capture-path check.
 
 ## Assessment
 
-The 19c endpoints, services, AWR dictionary access, and queryability of the capture script's referenced views were verified. PDB1's current visible history does not establish PDB-level AWR: its snapshots are `CON_ID=0`, and the checked event/metric history views are empty. The CDB capture output is incomplete, so neither CDB nor PDB end-to-end capture compatibility is established.
+The 19c endpoints, services, AWR dictionary access, queryability of the capture views, and current CDB AAS/main-metrics query data are verified. PDB1's current visible history does not establish PDB-level AWR: its snapshots are `CON_ID=0`, and the checked event/metric history views are empty. CDB end-to-end capture compatibility remains unverified until a current SQL*Plus output passes the parser.
 
-`source/awr_miner.sql` explicitly exits when a DBID has two or fewer snapshots. The local CDB output passes that threshold, but required report sections are absent. Do not treat snapshot count alone as sufficient; confirm that the relevant AWR history views contain data before rerunning or accepting a capture.
+`source/awr_miner.sql` explicitly exits when a DBID has two or fewer snapshots. Both current scopes show 25 snapshot rows, but the direct-PDB rows are all `CON_ID=0`; snapshot count alone is not sufficient to establish PDB AWR availability.
 
 ## Remaining Work
 
-- Recheck current interval, retention, and snapshot counts from `CDB$ROOT`; determine why its local capture omitted main-metrics and AAS sections.
-- Determine why PDB1 exposes only `CON_ID=0` snapshots and empty system-event/sysmetric-summary history despite `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`.
-- Once both scopes expose the required AWR history data, run captures separately from `CDB$ROOT` and `PDB1`, then validate them with the Phase 2 parser checks.
+- Run a fresh `source/awr_miner.sql` capture from `CDB$ROOT` with SQL*Plus 19.3 and validate the output using the pinned R 4.6.1 parser container.
+- Determine why PDB1 exposes only `CON_ID=0` snapshots and empty system-event/sysmetric-summary history despite `AWR_PDB_AUTOFLUSH_ENABLED=TRUE`; verify the resulting state in the CDB views.
+- Once PDB-scoped AWR history is visible, capture directly from `PDB1` and validate it with the Phase 2 parser checks.
 - Record any SQL*Plus-specific behavior and decide whether one capture script can serve both scopes or separate scripts are needed.
 
 ## Sources
