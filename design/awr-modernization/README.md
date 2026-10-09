@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 started on 2026-10-09; its static review and read-only test protocol are recorded in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The first CDB connection attempt failed during MCP initialization with `ORA-01950` before any query ran; both CDB and PDB checks remain outstanding. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Database checks remain limited to authorized `SELECT` statements.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 started on 2026-10-09; its static review, SQL*Plus route, and read-only test protocol are recorded in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). MCP failed during initialization with `ORA-01950`; local SQL*Plus 19.3 is installed but cannot resolve the approved LDAP aliases with its current Oracle Net configuration. CDB and PDB checks remain outstanding. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Database checks remain limited to authorized `SELECT` statements.
 
 ## Goal
 
@@ -76,7 +76,7 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 ### 3. SQL*Plus and Oracle compatibility
 
 - Review capture SQL, SQL*Plus assumptions, AWR views/columns, version guards, privileges, and Diagnostic Pack licensing.
-- Evaluate the CDB and direct-PDB paths using `SELECT`-only checks on the authorized SQL Developer connections `DBI_CGEMS401` (CDB) and `DBI_CGEMS401_PGEMS4` (direct PDB); decide whether capture should remain unified or use separate SQL scripts.
+- Evaluate the CDB and direct-PDB paths using `SELECT`-only checks from local SQL*Plus after approved Oracle Net connect identifiers are configured for both targets; decide whether capture should remain unified or use separate SQL scripts.
 - The user confirms these environments have the required licenses and saved credentials. Do not run the existing capture scripts: they contain non-SELECT operations. Keep read-only database checks separate from local fixture tests.
 - Acceptance: document what the approved SELECT-only checks establish for each 19c container scope; do not claim end-to-end capture compatibility without executing the capture path under separately authorized operations.
 - Risk and rollback: avoid database changes; keep capture-script modifications narrow and reversible, and do not run integration checks without authorization.
@@ -98,4 +98,4 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 ## Next Action
 
-Phases 0, 1, and 2 are complete. Phase 3 is blocked before its first query: ask the database/tooling administrator to investigate the MCP connection initialization error (`ORA-01950`, no privileges on tablespace `USERS`). After that is resolved, resume the authorized `SELECT`-only metadata and AWR visibility checks against both Oracle 19c connections and record the evidence in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Do not make database grants or run capture scripts or other non-SELECT operations; keep the GUI deferred.
+Phases 0, 1, and 2 are complete. Phase 3 will use local SQL*Plus rather than MCP. First obtain an approved EZCONNECT descriptor/TNS alias for each target or configure Oracle Net LDAP resolution; then run the authorized `SELECT`-only metadata and AWR visibility checks against both Oracle 19c targets and record the evidence in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Do not make database grants or run capture scripts or other non-SELECT operations; keep the GUI deferred.

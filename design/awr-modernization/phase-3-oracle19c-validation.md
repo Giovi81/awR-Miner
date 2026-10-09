@@ -1,7 +1,7 @@
 # Phase 3 SQL*Plus and Oracle 19c Compatibility
 
 **Assessment date:** 2026-10-09  
-**Status:** Blocked before database queries. Static review is recorded below; Oracle 19c compatibility is not verified.
+**Status:** No Oracle checks have run. The MCP route failed during initialization; a local SQL*Plus 19.3 client is available, but Oracle Net is not configured to resolve the approved connection aliases. Oracle 19c compatibility is not verified.
 
 ## Scope and Safety Boundary
 
@@ -11,7 +11,13 @@ The approved targets are the Oracle 19c CDB connection `DBI_CGEMS401` and direct
 
 On 2026-10-09, the SQLcl MCP connection attempt for `DBI_CGEMS401` failed with `ORA-01950: no privileges on tablespace 'USERS'` (reported at line 14). The connection was not established, and no schema inspection or SQL query was submitted. This error does not establish whether the account has access to AWR views or whether the database capture path works. The direct-PDB connection was not attempted.
 
-Ask the database/tooling administrator to investigate the MCP connection initialization and its tablespace requirement. Do not issue a quota/grant change from this project or retry database checks until that setup issue is resolved. No credentials are stored in this document.
+Ask the database/tooling administrator to investigate the MCP connection initialization and its tablespace requirement. Do not issue a quota/grant change from this project. No credentials are stored in this document.
+
+### SQL*Plus Command-Line Route
+
+The local client reports `SQL*Plus: Release 19.0.0.0.0, Version 19.3.0.0.0`. Its configured `sqlnet.ora` has `NAMES.DIRECTORY_PATH=(EZCONNECT,TNSNAMES)`; it does not enable LDAP name resolution. The configured network-admin directory contains `sqlnet.ora` and `tnsnames.ora`, but neither `DBI_CGEMS401` nor `DBI_CGEMS401_PGEMS4` is defined as a TNS alias. Thus SQL*Plus is installed, but cannot yet reuse the SQL Developer/MCP LDAP aliases as-is. No SQL*Plus database connection was attempted.
+
+To continue through SQL*Plus, obtain an approved EZCONNECT descriptor or TNS alias for each target, or have the Oracle client administrator configure the appropriate LDAP naming method. Keep authentication separate from the descriptor: use an interactive password prompt or an approved wallet, never a password in a command, script, or repository file. Once name resolution is ready, run the read-only checks in this document separately for CDB and PDB. This path avoids MCP; it does not change the `SELECT`-only database boundary.
 
 ### SQL Developer Comparison (User-Provided)
 
@@ -22,7 +28,7 @@ The user confirmed that SQL Developer connects successfully and returned these s
 | CDB | `C##GU_DBA` | `CGEMS401.generali.it` | `CDB$ROOT` | 1 | Present |
 | Direct PDB | `GU_DBA` | `pgems4.generali.it` | `PGEMS4` | 3 | Present |
 
-In both sessions, `SESSION_PRIVS` returned no row for `UNLIMITED TABLESPACE`, and `USER_TS_QUOTAS` returned no rows. This is consistent with an account that has no explicit tablespace quota and no unlimited-tablespace system privilege. It does not explain a failure of a pure `SELECT`: reading AWR views does not allocate segments in `USERS`. The SQL Developer results demonstrate that interactive connections to both targets work, but they do not prove that MCP uses the same initialization path, client identity, or connection hooks. The MCP `ORA-01950` therefore points to an allocation attempt during MCP connection setup or a database-side hook, not a quota requirement of the planned read-only checks. The exact statement and component remain unknown; do not grant quota merely to make the error disappear.
+In both sessions, `SESSION_PRIVS` returned no row for `UNLIMITED TABLESPACE`, and `USER_TS_QUOTAS` returned no rows. This is consistent with an account that has no explicit tablespace quota and no unlimited-tablespace system privilege. It does not explain a failure of a pure `SELECT`: reading AWR views does not allocate segments in `USERS`. The SQL Developer results demonstrate that interactive connections to both targets work, but they do not prove that MCP uses the same initialization path, client identity, or connection hooks. The MCP `ORA-01950` therefore points to an allocation attempt during MCP connection setup or a database-side hook, not a quota requirement of the planned read-only checks. The exact statement and component remain unknown; do not grant quota merely to make the error disappear. SQL*Plus currently cannot reach those targets because its local name-resolution setup lacks the LDAP method and aliases.
 
 To narrow the source, have the DBA inspect the MCP-side error/log at the reported line and, from SQL Developer, use read-only metadata queries to check database logon triggers and the MCP logging object:
 
@@ -105,8 +111,9 @@ Together, checks 1-4 establish the visible connection identity, test selected ve
 | SQL Developer session identity | Confirmed: `C##GU_DBA`, `CGEMS401.generali.it`, `CDB$ROOT`, `CON_ID=1` | Confirmed: `GU_DBA`, `pgems4.generali.it`, `PGEMS4`, `CON_ID=3` |
 | SQL Developer session role | `DBA` present; no `UNLIMITED TABLESPACE` row or explicit user quota row | `DBA` present; no `UNLIMITED TABLESPACE` row or explicit user quota row |
 | MCP connection established | Blocked: `ORA-01950` during initialization | Not attempted |
+| SQL*Plus 19.3 connection | Not attempted; no TNS alias and LDAP name resolution is disabled | Not attempted; no TNS alias and LDAP name resolution is disabled |
 | AWR view access and column compatibility | Not tested | Not tested |
 | Visible database IDs and snapshot container scope | Not tested | Not tested |
 | Capture execution / SQL*Plus behavior | Not authorized; not tested | Not authorized; not tested |
 
-Phase 3 remains open until both connections can be used for the approved read-only checks. Do not claim Oracle 19c CDB or PDB compatibility, change capture SQL, or select a unified/separate capture design based on this static review.
+Phase 3 remains open until SQL*Plus can connect to both targets and the approved read-only checks have results. Do not claim Oracle 19c CDB or PDB compatibility, change capture SQL, or select a unified/separate capture design based on this static review.
