@@ -1267,8 +1267,8 @@ build_data_frames <- function(fileName) {
   DF_TEMP <- getSection(theFileTXT,'MEMORY')
   
   #DF_TEMP_OUT <<- DF_TEMP
-  countDecimals <- sum(str_count(DF_TEMP$PGA,'\\.'))+sum(str_count(DF_TEMP$SGA,'\\.'))
-  countCommas <- sum(str_count(DF_TEMP$PGA,'\\,'))+sum(str_count(DF_TEMP$SGA,'\\,'))
+  countDecimals <- sum(str_count(DF_TEMP$PGA,'\\.'),na.rm=TRUE)+sum(str_count(DF_TEMP$SGA,'\\.'),na.rm=TRUE)
+  countCommas <- sum(str_count(DF_TEMP$PGA,'\\,'),na.rm=TRUE)+sum(str_count(DF_TEMP$SGA,'\\,'),na.rm=TRUE)
   
   computedDecSep <- '.'
   if(countCommas>countDecimals){
@@ -2891,7 +2891,7 @@ plot_cpu <- function(DF_MAIN_INT){
     p_gt <- plot_cpu_host_db(DF_MAIN_INT)
   }
   else if("cpu_per_s" %in% colnames(DF_MAIN_INT)){
-    if(sum(DF_MAIN_INT$os_cpu)>0){
+    if(sum(DF_MAIN_INT$os_cpu,na.rm=TRUE)>0){
       p_gt <- plot_cpu_sd(DF_MAIN_INT)
     }
     else{
@@ -2899,7 +2899,7 @@ plot_cpu <- function(DF_MAIN_INT){
     }
   }
   else{
-    if(sum(DF_MAIN_INT$os_cpu)>0){
+    if(sum(DF_MAIN_INT$os_cpu,na.rm=TRUE)>0){
       p_gt <- plot_cpu_no_sd(DF_MAIN_INT)
     }
     else{

@@ -648,9 +648,9 @@ select snap_id, sum(average) dbtime_p_s,
   dense_rank() over (order by sum(average) desc nulls last) rnk
  from dba_hist_sysmetric_summary
 where dbid = &DBID
- and snap_id between &SNAP_ID_MIN and &SNAP_ID_MAX
- and metric_name = 'Database Time Per Sec'
- group by snap_id)
+and snap_id between &SNAP_ID_MIN and &SNAP_ID_MAX
+and metric_name = 'Database Time Per Sec'
+group by snap_id)
  where rnk <= 10)
 SELECT a.SNAP_ID,
   INSTANCE_NUMBER,
@@ -878,11 +878,22 @@ max(decode(metric_name,'User Rollbacks Per Sec',                     average,nul
 max(decode(metric_name,'PX downgraded to serial Per Sec',                     average,null)) "pq_to_serial_per_sec",
 max(decode(metric_name,'Long Table Scans Per Sec',                     average,null)) "long_tbl_scan_per_sec"
   from(
-  select  snap_id,num_interval,to_char(end_time,'YY/MM/DD HH24:MI') end_time,instance_number inst,metric_name,round(average,1) average,
-  round(maxval,1) maxval,round(standard_deviation,1) standard_deviation
- from dba_hist_sysmetric_summary
-where dbid = &DBID
- and snap_id between &SNAP_ID_MIN and &SNAP_ID_MAX
+   select  snap_id,num_interval,to_char(end_time,'YY/MM/DD HH24:MI') end_time,instance_number inst,metric_name,round(average,1) average,
+    round(maxval,1) maxval,round(standard_deviation,1) standard_deviation
+   from (
+    select snap_id,num_interval,end_time,instance_number,metric_name,average,maxval,standard_deviation
+    from dba_hist_sysmetric_summary
+    where dbid = &DBID
+      and to_number(sys_context('USERENV','CON_ID')) in (0,1)
+    union all
+    select snap_id,num_interval,end_time,instance_number,metric_name,average,maxval,standard_deviation
+    from dba_hist_con_sysmetric_summ
+    where dbid = &DBID
+      and con_dbid = &DBID
+      and con_id = to_number(sys_context('USERENV','CON_ID'))
+      and to_number(sys_context('USERENV','CON_ID')) > 1
+   ) metric_source
+  where snap_id between &SNAP_ID_MIN and &SNAP_ID_MAX
  --and snap_id = 920
  --and instance_number = 4
  and metric_name in ('Host CPU Utilization (%)','CPU Usage Per Sec','Host CPU Usage Per Sec','Average Active Sessions','Database Time Per Sec',

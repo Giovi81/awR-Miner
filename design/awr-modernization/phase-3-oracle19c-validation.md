@@ -1,11 +1,11 @@
 # Phase 3 SQL*Plus and Oracle 19c Compatibility
 
 **Assessment date:** 2026-10-09  
-**Status:** In progress; CDB capture and parser validation passed on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. In PDB1, a direct `DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT` call completed without error, but visible snapshots remain `CON_ID=0`, event/metric history is empty, and a fresh direct-PDB capture still fails parser validation due to missing AAS/main-metrics sections.
+**Status:** CDB and direct-PDB capture/parser paths passed on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. PDB AWR is stored under its own DBID `2678021654` and `CON_ID=3`; earlier checks filtered by the CDB DBID and therefore missed it. The tested PDB capture parsed, but did not include I/O-wait-histogram data.
 
 ## Scope and Authorization
 
-The approved targets are the Oracle 19c CDB connection `LOCAL_ORCL` and direct-PDB connection `LOCAL_PDB1`. The user confirmed that both databases are dedicated test environments, database work is unrestricted for these tests, and Diagnostic Pack licensing is available. No database settings were changed. An explicit AWR snapshot call was made in PDB1; the follow-up query did not show a PDB-scoped snapshot.
+The approved targets are the Oracle 19c CDB connection `LOCAL_ORCL` and direct-PDB connection `LOCAL_PDB1`. The user confirmed that both databases are dedicated test environments, database work is unrestricted for these tests, and Diagnostic Pack licensing is available. No database settings were changed. An explicit AWR snapshot call was made in PDB1; the initial follow-up query filtered on the CDB DBID and therefore missed the PDB-local DBID and its `CON_ID=3` snapshots.
 
 ## Results
 
@@ -19,30 +19,33 @@ Checks used the configured SQLcl MCP connections. Local SQL*Plus is installed at
 | Open mode | READ WRITE | READ WRITE |
 | NLS language | AMERICAN | AMERICAN |
 | MCP autocommit | OFF | OFF |
-| DBID / database | 1773986901 / ORCL | 1773986901 / ORCL |
-| AWR snapshots in latest direct query | 25 rows, snap IDs 1-25, `CON_ID=0`, zero errors | 31 rows, snap IDs 1-31, all `CON_ID=0` |
+| AWR DBID / database | 1773986901 / ORCL | 2678021654 / ORCL (CDB DBID is 1773986901) |
+| AWR snapshots in latest CDB query | 33 rows, snap IDs 1-33, `CON_ID=0`, zero errors | 13 rows, snap IDs 1-13, `CON_ID=3`, zero errors |
 
-The capture SQL references 21 AWR or statistics views. Earlier combined queries completed without access or object errors in both containers, returning a row from all 21 in the CDB and 17 in the PDB; the other four PDB views were empty. Current CDB checks found 3,013 rows in `DBA_HIST_SYSTEM_EVENT` and 4,025 rows in `DBA_HIST_SYSMETRIC_SUMMARY`. Running the capture's AAS query shape returned 253 grouped rows, and its selected main-metrics query returned 25 grouped rows for snapshots 1-25. In PDB1, the same two history views returned zero rows, and `DBA_HIST_SNAPSHOT` returned 25 rows all with `CON_ID=0`; these are not evidence of PDB-level AWR snapshots.
+The key correction was to query all AWR DBIDs instead of filtering PDB checks by `V$DATABASE.DBID`, which reports the CDB DBID even in the PDB session. The CDB views now show root history under DBID `1773986901` (`CON_ID=0` snapshots and `CON_ID=1` system events) and PDB history under DBID `2678021654` (`CON_ID=3`). The latest CDB check found 33 root snapshots and 13 PDB snapshots, both with zero `ERROR_COUNT`; system-event history contained 4,116 root rows and 1,057 PDB rows.
 
-The current CDB check found `DBA_HIST_WR_CONTROL` set to a 10-minute interval and 60-minute retention. `AWR_PDB_AUTOFLUSH_ENABLED=FALSE` in `CDB$ROOT`; Oracle documents that this value has no effect on root snapshots and that an individual PDB's value is honored. The current PDB1 check verified `AWR_PDB_AUTOFLUSH_ENABLED=TRUE` at `CON_ID=3`, a 10-minute interval, and 1440-minute retention. An explicit `DBMS_WORKLOAD_REPOSITORY.CREATE_SNAPSHOT` call through SQL*Plus 19.3 completed successfully, but the follow-up query still showed only 31 rows in `DBA_HIST_SNAPSHOT`, all `CON_ID=0`, and zero rows in `DBA_HIST_SYSTEM_EVENT` and `DBA_HIST_SYSMETRIC_SUMMARY`. Oracle's 19c package reference documents `BESTFIT` as the default flush level, mapping to `LITE` for a PDB, and says a new snapshot record should be visible in `DBA_HIST_SNAPSHOT`; the observed result is inconsistent with that documented behavior and needs investigation.
+The general `DBA_HIST_SYSMETRIC_SUMMARY` view returned no rows for the PDB DBID. Oracle's `DBA_HIST_CON_SYSMETRIC_SUMM` view contains the PDB metrics: from the PDB connection, 612 rows across 12 local snapshots for DBID/CON_DBID `2678021654`; from the CDB view, 1,326 rows for `CON_DBID=2678021654`, `CON_ID=3`. The capture SQL now reads that container-specific view when connected to a PDB and retains the general sysmetric view for root/non-CDB sessions. The PDB DBID also appears in `DBA_HIST_WR_CONTROL` with a 10-minute interval and 24-hour retention.
+
+The PDB reports `AWR_PDB_AUTOFLUSH_ENABLED=TRUE` at `CON_ID=3`, `STATISTICS_LEVEL=TYPICAL`, and `CONTROL_MANAGEMENT_PACK_ACCESS=DIAGNOSTIC+TUNING`; the PDB is READ WRITE and not restricted. The CDB root's autoflush value is `FALSE`, which Oracle documents as having no effect on root snapshots; the per-PDB `TRUE` value is honored. The earlier conclusion that manual snapshot creation produced no PDB record was caused by querying only the CDB DBID. Oracle documents `BESTFIT` as the default flush level, mapped to `LITE` for a PDB.
 
 The earlier local capture `awr-hist-1773986901-ORCL-0-21.out` reported snap IDs 1-21 but lacked `MAIN-METRICS` and `AVERAGE-ACTIVE-SESSIONS`, so parser execution failed on missing `DF_AAS_INT$WAIT_CLASS`. A fresh SQL*Plus run generated `awr-hist-1773986901-ORCL-0-26.out` with 19 sections. The active parser completed and generated a parsed RDA, PDF, HTML, and CSV without an error log. The parsed tables contain 26 `DF_MAIN` rows, 264 `DF_AAS` rows, and 446 `DF_IO_WAIT_HIST` rows.
 
-The first parse of the fresh CDB capture exposed an unavailable `tbl_dt()` helper in the I/O-wait fill joins. Replacing those three calls with `data.table()` allowed the parser to finish; the Phase 2 offline parser/output test passed afterward. A subsequent PDB1 capture, `awr-hist-1773986901-ORCL-0-31.out`, still contained only 13 sections and omitted `MAIN-METRICS` and `AVERAGE-ACTIVE-SESSIONS`. The pinned R 4.6.1 parser failed because `DF_AAS_INT` had no `WAIT_CLASS`; the missing PDB history data remained after the manual snapshot call. Capture and parsed artifacts are not committed because they contain database-derived AWR data. An attempt to execute `source/awr_miner.sql` through the SQLcl MCP runner stopped on SQL*Plus-specific commands (`SET UNDERLINE`, `REPHEADER`, and `REPFOOTER`); the SQL*Plus 19.3 runs are the compatibility evidence for this script.
+The CDB capture `awr-hist-1773986901-ORCL-0-26.out` parsed successfully after replacing unavailable `tbl_dt()` calls with `data.table()`. The direct-PDB capture using the correct DBID, `awr-hist-2678021654-ORCL-0-14.out`, contains 16 sections including `MAIN-METRICS` and `AVERAGE-ACTIVE-SESSIONS`. The SQL capture now uses `DBA_HIST_CON_SYSMETRIC_SUMM` for PDB metrics. The parser needed two additional data-tolerance fixes: ignore missing PGA/SGA values when choosing the decimal separator, and treat absent host CPU values as zero for the plot-availability check. The pinned parser completed and produced a parsed RDA, PDF, HTML, and CSV without an error log. Parsed row counts were 13 `DF_MAIN`, 130 `DF_AAS`, and 0 `DF_IO_WAIT_HIST`. The PDB capture contains no `IO-WAIT-HISTOGRAM` section, so that metric family remains unverified/unavailable. The Phase 2 fixture test passed after the parser changes. Captures and parsed artifacts are not committed because they contain database-derived AWR data.
 
 ## Assessment
 
-The 19c endpoints, services, AWR dictionary access, queryability of the capture views, and end-to-end CDB capture/parser path are verified. Direct invocation of `CREATE_SNAPSHOT` in PDB1 completed but did not result in visible PDB-scoped history. PDB1's snapshots are still `CON_ID=0`, its checked event/metric history views are empty, and the direct-PDB capture does not parse. Direct-PDB end-to-end capture compatibility remains unverified.
+The 19c endpoints, services, AWR dictionary access, CDB-level capture/parser path, and direct-PDB capture/parser path are verified. PDB AWR is in a separate DBID and must be selected explicitly; the CDB DBID from `V$DATABASE` is not the PDB AWR DBID. The PDB capture/parser succeeds for the available metrics, but I/O-wait-histogram collection is not established.
 
-`source/awr_miner.sql` explicitly exits when a DBID has two or fewer snapshots. Both current scopes show 25 snapshot rows, but the direct-PDB rows are all `CON_ID=0`; snapshot count alone is not sufficient to establish PDB AWR availability.
+`source/awr_miner.sql` exits when the selected DBID has two or fewer snapshots. The PDB DBID has 13 snapshots; its I/O-wait-histogram section is absent even though system-event and sysmetric container data are available.
 
 ## Remaining Work
 
-- Determine why PDB1 exposes only `CON_ID=0` snapshots and empty system-event/sysmetric-summary history despite `AWR_PDB_AUTOFLUSH_ENABLED=TRUE` and a successful manual snapshot call; verify the resulting state in the CDB views.
-- Once PDB-scoped AWR history is visible, capture directly from `PDB1` and validate it with the Phase 2 parser checks.
+- Determine whether the PDB's missing I/O-wait-histogram rows are expected or require a container-specific AWR source view.
 - Record any SQL*Plus-specific behavior and decide whether one capture script can serve both scopes or separate scripts are needed.
 
 ## Sources
 
 - Oracle Database 19c `DBMS_WORKLOAD_REPOSITORY`: https://docs.oracle.com/en/database/oracle/oracle-database/19/arpls/DBMS_WORKLOAD_REPOSITORY.html
 - Oracle Database 19c `AWR_PDB_AUTOFLUSH_ENABLED`: https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/AWR_PDB_AUTOFLUSH_ENABLED.html
+- Oracle Database 19c `DBA_HIST_CON_SYSMETRIC_SUMM`: https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/DBA_HIST_CON_SYSMETRIC_SUMM.html
+- Oracle Database 19c `DBA_HIST_SYSMETRIC_SUMMARY`: https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/DBA_HIST_SYSMETRIC_SUMMARY.html
