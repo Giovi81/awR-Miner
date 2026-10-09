@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 checks on 2026-10-09 connected successfully through MCP to the approved 19c CDB and PDB targets, and the capture SQL's AWR view references were queryable. End-to-end capture remains pending because each scope has only one snapshot and PDB automatic AWR snapshots are disabled; details are in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 checks on 2026-10-09 connected successfully through MCP to the approved 19c CDB and PDB targets, and the capture SQL's AWR view references were queryable. The user has since reported setting a 10-minute interval, 24-hour retention, and enabling `AWR_PDB_AUTOFLUSH_ENABLED` in `PDB1`; these changes and new snapshots are pending MCP verification, so end-to-end capture remains pending. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
 
 ## Goal
 
@@ -18,7 +18,7 @@ Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and 
 - Defer the graphical interface to a later release; do not expand the current release into a GUI project.
 - Phase 0's SELECT-only boundary was replaced on 2026-10-09 by the user's authorization for unrestricted testing on the dedicated `LOCAL_ORCL` and `LOCAL_PDB1` targets. No database settings or data were changed during the initial Phase 3 checks.
 - Do not run the default Ant `build` target for routine analysis or validation. It changes source/release artifacts and includes Git operations.
-- Do not commit, tag, push, access a database, or make architectural changes without explicit authorization. The approved Oracle access for this work remains `SELECT`-only; Phase 0 did not connect to either database.
+- Do not commit, tag, push, access a database, or make architectural changes without explicit authorization. Phase 0 did not connect to either database; unrestricted database testing is now authorized for the dedicated Phase 3 targets.
 
 ## Initial Repository Anchors
 
