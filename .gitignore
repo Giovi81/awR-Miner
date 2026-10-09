@@ -138,3 +138,4 @@ test-cases/*.err
 .Rproj.user
 .github/
 .vscode/
+.idea/
