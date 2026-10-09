@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Live Oracle checks remain in Phase 3 and are limited to authorized `SELECT` statements.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for evidence and compatibility status. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). The parser test does not establish Oracle compatibility. Phase 3 started on 2026-10-09; its static review and read-only test protocol are recorded in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The first CDB connection attempt failed during MCP initialization with `ORA-01950` before any query ran; both CDB and PDB checks remain outstanding. The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. Database checks remain limited to authorized `SELECT` statements.
 
 ## Goal
 
@@ -98,4 +98,4 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 ## Next Action
 
-Phases 0, 1, and 2 are complete. Phase 3 starts with authorized `SELECT`-only metadata checks against the Oracle 19c CDB and direct-PDB connections, then documents the visibility and privileges relevant to AWR capture. Do not run capture scripts or other non-SELECT operations; keep the GUI deferred.
+Phases 0, 1, and 2 are complete. Phase 3 is blocked before its first query: ask the database/tooling administrator to investigate the MCP connection initialization error (`ORA-01950`, no privileges on tablespace `USERS`). After that is resolved, resume the authorized `SELECT`-only metadata and AWR visibility checks against both Oracle 19c connections and record the evidence in [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Do not make database grants or run capture scripts or other non-SELECT operations; keep the GUI deferred.
