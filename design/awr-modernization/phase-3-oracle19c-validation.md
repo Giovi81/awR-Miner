@@ -1,13 +1,15 @@
 # Phase 3 SQL*Plus and Oracle 19c Compatibility
 
 **Assessment date:** 2026-10-09  
-**Status:** CDB and direct-PDB capture/parser paths passed on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. PDB AWR is stored under its own DBID `2678021654` and `CON_ID=3`; earlier checks filtered by the CDB DBID and therefore missed it. The tested PDB capture parsed, but did not include I/O-wait-histogram data.
+**Status updated 2026-10-26:** The current release scope is Oracle 19c CDB only. The CDB capture/parser path passed on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. Direct-PDB results in this report are retained as historical evidence and are not current acceptance criteria. PDB support is deferred and will use a dedicated capture script in a future scope.
 
 ## Scope and Authorization
 
 The approved targets are the Oracle 19c CDB connection `LOCAL_ORCL` and direct-PDB connection `LOCAL_PDB1`. The user confirmed that both databases are dedicated test environments, database work is unrestricted for these tests, and Diagnostic Pack licensing is available. No database settings were changed. An explicit AWR snapshot call was made in PDB1; the initial follow-up query filtered on the CDB DBID and therefore missed the PDB-local DBID and its `CON_ID=3` snapshots.
 
-## Results
+## Results Recorded During Phase 3
+
+The results below document the original CDB and direct-PDB test scope. CDB evidence remains applicable to the current release; PDB evidence is historical only and is deferred from current acceptance.
 
 Checks used the configured SQLcl MCP connections. Local SQL*Plus is installed at 19.3.0, but the MCP route now resolves both approved targets, so the former local Oracle Net alias issue does not block metadata validation.
 
@@ -38,10 +40,14 @@ The 19c endpoints, services, AWR dictionary access, CDB-level capture/parser pat
 
 `source/awr_miner.sql` exits when the selected DBID has two or fewer snapshots. The PDB DBID has 13 snapshots; its I/O-wait-histogram section is absent even though system-event and sysmetric container data are available.
 
-## Remaining Work
+## Deferred PDB Work
 
-- Determine whether the PDB's missing I/O-wait-histogram rows are expected or require a container-specific AWR source view.
-- Record any SQL*Plus-specific behavior and decide whether one capture script can serve both scopes or separate scripts are needed.
+PDB `IO-WAIT-HISTOGRAM` availability and the dedicated PDB capture script are deferred. They are not blockers for the current CDB-only release. Revisit them when PDB support is explicitly resumed.
+
+## Current CDB Follow-up
+
+- Complete CDB-specific user documentation, including the tested environment, privileges, and Diagnostic Pack licensing requirements.
+- Define and validate a safe local packaging procedure without invoking the default Ant `build` target or performing Git release actions.
 
 ## Sources
 

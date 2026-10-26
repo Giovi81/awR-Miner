@@ -2,11 +2,11 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). Phase 3 verified CDB and direct-PDB captures on Oracle 19.3. The PDB uses its own AWR DBID `2678021654` with `CON_ID=3`; earlier queries filtered on the CDB DBID and missed those records. The capture SQL now reads container sysmetrics for PDB sessions, and the parser completes the PDB capture. `DF_IO_WAIT_HIST` remains empty for the tested PDB capture and needs separate investigation. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
+**Updated 2026-10-26:** Phases 0-2 are complete, and the Oracle 19.3 CDB capture/parser path passed with SQL*Plus 19.3 and R 4.6.1. The current release scope is CDB only. PDB support is deferred and, when resumed, will use a dedicated capture script; prior PDB test results remain historical evidence, not current acceptance criteria. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). The release floor/target remains R 4.6.1, with Oracle Database 19c as the only database target. Remaining work is to finalize CDB-specific documentation and safe local release packaging. The default Ant `build` target remains prohibited for routine validation because it includes release and Git side effects.
 
 ## Goal
 
-Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and Oracle Database 19c, covering CDB-level and PDB-level AWR. Keep the current script workflow for this release; evaluate whether CDB and PDB capture need separate SQL scripts. A graphical interface is explicitly deferred to a future release. Newer Oracle releases are outside the current scope.
+Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and Oracle Database 19c for CDB-level AWR only. Keep the current script workflow for this release. PDB support is deferred to a future release and will use a dedicated capture script. A graphical interface is also deferred. Newer Oracle releases are outside the current scope.
 
 ## Confirmed Constraints
 
@@ -14,11 +14,11 @@ Prepare a reviewable, testable modernization of AWR-Miner targeting R 4.6.1 and 
 - Run R, dependency installation, tests, and builds in pinned Docker containers. Do not install tooling on the host.
 - Keep fixture-based parser checks separate from checks requiring Oracle access.
 - Preserve the AWR Diagnostic Pack license check. Identify and document required Oracle privileges and licensed views before claiming capture compatibility.
-- CDB-level and PDB-level AWR are both required on Oracle Database 19c; assess separate capture scripts as a design option.
+- The current release targets Oracle 19c CDB-level AWR only. PDB support is out of scope and is planned for a future dedicated capture script.
 - Defer the graphical interface to a later release; do not expand the current release into a GUI project.
-- Phase 0's SELECT-only boundary was replaced on 2026-10-09 by the user's authorization for unrestricted testing on the dedicated `LOCAL_ORCL` and `LOCAL_PDB1` targets. No database settings or data were changed during the initial Phase 3 checks.
+- The user authorized database testing on dedicated targets on 2026-10-09. Current project work is limited to the CDB target; do not perform PDB work as part of this release scope.
 - Do not run the default Ant `build` target for routine analysis or validation. It changes source/release artifacts and includes Git operations.
-- Do not commit, tag, push, access a database, or make architectural changes without explicit authorization. Phase 0 did not connect to either database; unrestricted database testing is now authorized for the dedicated Phase 3 targets.
+- Do not commit, tag, push, or access a database without explicit authorization. The only database integration target in the current scope is the dedicated CDB environment; fixture tests remain offline.
 
 ## Initial Repository Anchors
 
@@ -51,7 +51,7 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 - Inspect the active R parser, settings, SQL capture paths, documentation, Ant targets, and available fixtures.
 - Record the current dependency inventory and existing testable behavior.
 - Verify the latest stable R release against the R Project on the assessment date.
-- Verify the Oracle 19c CDB-level and PDB-level requirements against current Oracle primary documentation. Record the authorized test environments and defer their live `SELECT`-only checks to Phase 3.
+- Verify the Oracle 19c CDB-level requirements against current Oracle primary documentation. Record the authorized test environment and defer live checks to Phase 3.
 - Deliverable: a dated baseline and compatibility matrix that distinguishes verified facts, intended support, and untested hypotheses.
 - Acceptance: every version claim has an official source; each matrix cell identifies its evidence or its required test.
 - Risk and rollback: assessment is read-only; no source rollback is needed.
@@ -76,9 +76,9 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 ### 3. SQL*Plus and Oracle compatibility
 
 - Review capture SQL, SQL*Plus assumptions, AWR views/columns, version guards, privileges, and Diagnostic Pack licensing.
-- Evaluate the CDB and direct-PDB paths using the authorized Oracle checks after approved connections are available for both targets; decide whether capture should remain unified or use separate SQL scripts.
-- The user confirms these environments are dedicated for testing and have the required licenses and saved credentials. Run the capture separately in CDB and PDB scope only after each has enough AWR snapshots; keep database-generated capture validation separate from local fixture tests.
-- Acceptance: document what the authorized checks establish for each 19c container scope; do not claim end-to-end capture compatibility without executing and validating the capture path.
+- Validate the CDB path using the authorized Oracle 19c CDB target; keep database-generated capture validation separate from local fixture tests.
+- The CDB capture/parser path has passed on the tested 19c environment. PDB checks are historical and deferred; future PDB work will use a dedicated script.
+- Acceptance: document what the authorized checks establish for CDB scope; do not claim end-to-end capture compatibility without executing and validating the capture path.
 - Risk and rollback: avoid database changes; keep capture-script modifications narrow and reversible, and do not run integration checks without authorization.
 
 ### 4. Documentation and release packaging
@@ -93,9 +93,9 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 - Phase 0 is complete. Its evidence is a static repository/documentation assessment plus the documented base-R fixture smoke check; it does not establish full parser or Oracle compatibility.
 - Phase 1's pinned, offline base-R fixture smoke check and Phase 2's fixture-backed parser/output checks are complete. The Phase 2 result records a pre-existing parsed-table schema difference from the historical baseline.
-- Decide whether CDB-level and direct-PDB capture should use one or separate SQL scripts after root-scope checks and a complete capture are available.
+- Keep the current CDB workflow on its existing capture path. When PDB work resumes, implement and validate it as a dedicated capture script.
 - Keep the GUI deferred to a future release, as already agreed.
 
 ## Next Action
 
-Phases 0, 1, and 2 are complete. Phase 3 has verified CDB and direct-PDB capture/parser output on Oracle 19.3. Investigate why the PDB capture has no `IO-WAIT-HISTOGRAM` section and decide whether that metric family is expected for PDB-level AWR.
+Phases 0-3 have completed their current-scope checks, including a successful CDB capture/parser run on Oracle 19.3. Finish CDB-specific user documentation and define a safe local packaging procedure. PDB compatibility and its dedicated capture script are deferred to a future scope; the missing PDB `IO-WAIT-HISTOGRAM` data is not a blocker for this release.

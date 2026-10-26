@@ -1,5 +1,7 @@
 # Phase 0 Baseline Assessment
 
+> **Scope update (2026-10-26):** This dated baseline records the original decision to target both CDB and PDB AWR. That decision has been superseded for the current release: target Oracle 19c CDB only. PDB support is deferred and will use a dedicated capture script in a future scope. The original statements below are retained as historical assessment evidence.
+
 **Assessment date:** 2026-10-08  
 **Status:** Complete as a read-only repository and documentation assessment. The user selected R 4.6.1 (no older-R backward-compatibility requirement) and Oracle Database 19c, with both CDB-level and PDB-level AWR, as the scope for this iteration. The user confirms the authorized SQL Developer connections have saved credentials and the required licenses. Any database commands are restricted to `SELECT` statements only. No Oracle database was accessed. No runtime source, SQL, release snapshot, or build file was modified.
 
