@@ -39,6 +39,7 @@ Out of scope: changing capture/parser behavior, investigating the deferred PDB m
 - Diagnostic Pack licensing, operator responsibility, Oracle access prerequisites, and the absence of a verified least-privilege grant recipe are clear.
 - CDB/PDB entrypoints and the deferred PDB histogram limitation are accurately described.
 - Parser checks can be followed using the pinned Docker instructions without host-side R or Oracle access.
+- Locally generated AWR capture files and parsed outputs remain test evidence and are excluded from all package artifacts.
 - A local packaging procedure is documented and reviewable without changing active source/version metadata, overwriting historical releases, or performing Git operations.
 - No release is created or published as part of Phase 4 documentation work.
 
