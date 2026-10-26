@@ -1,6 +1,13 @@
 # Phase 4 Documentation and Release Preparation
 
-**Status:** Ready to begin. Phase 3 is formally complete for its approved scope; the PDB I/O-wait-histogram gap is deferred to a future release. This plan prepares documentation and a safe local packaging procedure. It does not authorize a release, database access, commits, tags, or pushes.
+**Status:** In progress (started 2026-10-26). Phase 3 is formally complete for its approved scope; the PDB I/O-wait-histogram gap is deferred to a future release. This plan prepares documentation and a safe local packaging procedure. It does not authorize a release, database access, commits, tags, or pushes.
+
+## Progress
+
+- Verified on 2026-10-26 from R Project news and CRAN that R 4.6.1 remains the latest stable release; R 4.6.2 is scheduled for 2026-10-29 and is not tested for AWR-Miner. Oracle's 19c licensing manual lists AWR under Oracle Diagnostics Pack.
+- Updated the root README to replace the stale Oracle 10.1+/R 3.x+ claims with the tested versions, CDB/PDB capture paths, licensing/access caveats, the deferred PDB histogram limitation, and the offline Docker parser test reference.
+- Built the pinned Phase 2 Docker test image and passed `tests/phase2-parser.R` offline after the README update.
+- Still open: decide how to label or maintain the legacy HTML guide, document a safe local packaging procedure, and complete the documentation consistency review. No package artifacts or release have been created.
 
 ## Objective
 
@@ -27,11 +34,11 @@ Out of scope: changing capture/parser behavior, investigating the deferred PDB m
 
 ## Work Plan
 
-1. Verify current R and Oracle documentation facts against primary sources before updating support statements; record the check date and exact tested versions.
-2. Confirm which user-facing docs are authoritative and map each instruction to the active `source/` scripts and pinned tests.
-3. Draft setup, capture prerequisites/licensing, tested compatibility, limitations, and fixture-test instructions. Keep database integration results separate from offline parser checks.
-4. Inspect Ant dependencies and specify a local packaging approach that works on an isolated copy or uses explicit non-release targets. Do not invoke the default `build` target.
-5. Review the resulting docs and packaging instructions for consistency, stale version claims, unverified grants, data handling, and accidental release side effects.
+1. [x] Verify current R and Oracle documentation facts against primary sources before updating support statements; record the check date and exact tested versions.
+2. [ ] Confirm which user-facing docs are authoritative and map each instruction to the active `source/` scripts and pinned tests.
+3. [ ] Draft setup, capture prerequisites/licensing, tested compatibility, limitations, and fixture-test instructions. Keep database integration results separate from offline parser checks.
+4. [ ] Inspect Ant dependencies and specify a local packaging approach that works on an isolated copy or uses explicit non-release targets. Do not invoke the default `build` target.
+5. [ ] Review the resulting docs and packaging instructions for consistency, stale version claims, unverified grants, data handling, and accidental release side effects.
 
 ## Acceptance Criteria
 
