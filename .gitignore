@@ -139,3 +139,4 @@ test-cases/*.err
 .github/
 .vscode/
 .idea/
+awr-hist-*.out
