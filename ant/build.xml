@@ -124,6 +124,10 @@
     
     <copy file="${src.dir}/R-AWR-Mining.R" todir="${build.dir}" />
 	<copy file="./readme.R-plots.html" todir="${build.dir}" />
+    <copy file="./DOCKER.md" todir="${build.dir}" />
+    <copy file="./renv.lock" todir="${build.dir}" />
+    <copy file="./tests/Dockerfile" todir="${build.dir}/tests" />
+    <copy file="./tests/Dockerfile.dockerignore" todir="${build.dir}/tests" />
   </target>
   
   

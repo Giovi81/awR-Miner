@@ -20,12 +20,12 @@ The direct-PDB capture tested on Oracle 19.3 did not contain an `IO-WAIT-HISTOGR
 
 - Oracle Diagnostic Pack entitlement for the database use. AWR-Miner asks the operator to confirm licensing; the prompt does not check entitlement. The operator is responsible for confirming licensing with their organization and Oracle terms.
 - SQL*Plus and permission to read the AWR views used by the selected capture path. The tested client was SQL*Plus 19.3. The exact least-privilege grants have not been established; ask the database administrator to review access rather than applying broad grants.
-- R 4.6.1 with the parser dependencies available. The pinned Docker environment and offline fixture checks are documented in [tests/README.md](tests/README.md).
+- Either Docker with the pinned R environment, or R 4.6.1 with the parser dependencies available. **No local R installation is needed when using Docker:** follow the [end-user Docker guide](DOCKER.md). Offline fixture checks are documented separately in [tests/README.md](tests/README.md).
 
 ## Capture and Parse
 
 1. Connect with SQL*Plus to the intended Oracle 19c container and run the matching capture script: [`source/awr_miner.sql`](source/awr_miner.sql) for CDB-level AWR from the CDB root, or [`source/awr_miner_pdb.sql`](source/awr_miner_pdb.sql) for a direct PDB connection. The scripts prompt for Diagnostic Pack licensing and write AWR capture files.
-2. Run the parser with the directory containing the `.out` or `.out.gz` captures as its first argument:
+2. Generate reports using the [Docker instructions](DOCKER.md), without installing R on your system. Alternatively, if R and its dependencies are already installed, run the parser with the directory containing the `.out` or `.out.gz` captures as its first argument:
 
 	```text
 	Rscript source/R-AWR-Mining.R "path/to/capture-files"
@@ -34,6 +34,8 @@ The direct-PDB capture tested on Oracle 19.3 did not contain an `IO-WAIT-HISTOGR
 	The parser writes its reports and parsed data to that directory. Keep database-derived captures and generated outputs protected according to your organization's data-handling rules.
 
 For repeatable offline parser validation, follow the Docker commands in [tests/README.md](tests/README.md). This fixture test does not connect to Oracle and is separate from capture integration testing.
+
+Future releases assembled by the Ant packaging target include `DOCKER.md`, `renv.lock`, and the Docker build files alongside the parser. Historical release snapshots are unchanged.
 
 ## Version and Licensing Sources
 

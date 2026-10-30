@@ -1,0 +1,5 @@
+**
+!renv.lock
+!tests/
+!tests/Dockerfile
+!tests/Dockerfile.dockerignore

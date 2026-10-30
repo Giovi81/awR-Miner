@@ -1,5 +1,7 @@
 # Parser Validation
 
+To process your own captures without installing R, follow the [end-user Docker guide](../DOCKER.md). The commands below are regression checks for repository fixtures, not the end-user reporting workflow.
+
 Build the pinned R 4.6.1 test image from the repository root. The build downloads the pinned `renv` release, restores the versions in `renv.lock`, and uses a dated Debian snapshot for the system libcurl headers:
 
 ```powershell
