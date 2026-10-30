@@ -98,7 +98,7 @@ if(exists("debugModeOverride")){
 
 
 
-awrMinerPlotVersion <- '5.0.5'
+awrMinerPlotVersion <- '5.0.9'
 
 filePattern <- "^awr-hist*.*(\\.out|\\.gz)$"
 if(exists("filePatternOverride")){

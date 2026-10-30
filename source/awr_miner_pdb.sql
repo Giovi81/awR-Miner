@@ -20,7 +20,7 @@ REPHEADER OFF
 REPFOOTER OFF
 
 
-define AWR_MINER_VER = 5.1.1
+define AWR_MINER_VER = 5.0.9
 
 
 set termout off

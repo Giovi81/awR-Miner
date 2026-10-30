@@ -3,6 +3,8 @@ AWR-Miner
 
 AWR-Miner captures Oracle Automatic Workload Repository (AWR) data with SQL*Plus and parses the capture files with R to generate performance plots and reports.
 
+**Current release:** 5.0.9 (2026-10-30).
+
 ## Verified Compatibility
 
 The current support statement is limited to the following tested versions and paths:
