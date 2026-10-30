@@ -10,7 +10,7 @@ The current support statement is limited to the following tested versions and pa
 - R 4.6.1 for parser and generated outputs; the offline fixture test passed on 2026-10-26.
 - Oracle Database 19.3 CDB root and direct-PDB capture paths, using SQL*Plus 19.3 and R 4.6.1; integration checks were completed on 2026-10-09.
 
-These checks do not establish support for other Oracle Database or SQL client versions. R Project news lists R 4.6.2 as scheduled for 2026-10-29; it has not been tested for AWR-Miner. See the [Phase 3 validation record](design/awr-modernization/phase-3-oracle19c-validation.md) for the tested database paths and evidence.
+These checks do not establish support for other Oracle Database or SQL client versions. R 4.6.2 was released on 2026-10-29 and is the latest stable release as of 2026-10-30; it has not been tested for AWR-Miner. See the [Phase 3 validation record](design/awr-modernization/phase-3-oracle19c-validation.md) for the tested database paths and evidence.
 
 The direct-PDB capture tested on Oracle 19.3 did not contain an `IO-WAIT-HISTOGRAM` section. That metric is unavailable in the tested PDB path and is deferred to a future release.
 
@@ -35,7 +35,7 @@ For repeatable offline parser validation, follow the Docker commands in [tests/R
 
 ## Version and Licensing Sources
 
-Checked on 2026-10-26: the [R Project news](https://www.r-project.org/news.html) identifies R 4.6.1 as released and R 4.6.2 as scheduled for 2026-10-29; the [CRAN R sources page](https://cran.r-project.org/src/base/R-4/) lists 4.6.1 as the latest release. Oracle's [19c Licensing Information User Manual](https://docs.oracle.com/en/database/oracle/oracle-database/19/dblic/Licensing-Information.html) lists AWR under Oracle Diagnostics Pack. Licensing depends on the organization's Oracle offering and entitlements; this documentation is not a license determination.
+Checked on 2026-10-30: the [CRAN R sources page](https://cran.r-project.org/src/base/R-4/) lists R 4.6.2, released 2026-10-29, as the latest release. AWR-Miner's latest tested R version remains 4.6.1. Oracle's [19c Licensing Information User Manual](https://docs.oracle.com/en/database/oracle/oracle-database/19/dblic/Licensing-Information.html) lists AWR under Oracle Diagnostics Pack. Licensing depends on the organization's Oracle offering and entitlements; this documentation is not a license determination.
 
 # Options
 Options can be set interactively in an IDE like RStudio in the "console" section or through a file named very specifically *settings.R*. Using settings.R is the more reliable and preferred method. 

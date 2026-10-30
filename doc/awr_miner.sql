@@ -1,3 +1,5 @@
+-- Historical documentation snapshot: AWR-Miner 2.9.6.
+-- Use the active CDB and PDB capture scripts under ../source/ instead.
 set define '&'
 set concat '~'
 set pagesize 50000

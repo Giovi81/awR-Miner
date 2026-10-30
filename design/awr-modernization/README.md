@@ -2,7 +2,7 @@
 
 ## Status
 
-Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). Phase 3 is complete for the approved scope: CDB and direct-PDB capture/parser paths were verified on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. The tested PDB does not produce `DF_IO_WAIT_HIST`; investigation is deferred to a future release and is not a gate for this release. The current separate CDB and PDB capture entrypoints will be retained; consolidation is out of scope. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Phase 4, documentation and safe local packaging preparation, is in progress; the root README now reflects tested compatibility and the offline test workflow. A safe packaging procedure and the remaining documentation review are still open; see [phase-4-docs-release-prep.md](phase-4-docs-release-prep.md). The approved release floor/target is R 4.6.1 with no older-R backward-compatibility requirement. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
+Phase 0 baseline completed on 2026-10-08; see [phase-0-baseline.md](phase-0-baseline.md) for its dated evidence. Phase 1's offline base-R fixture smoke environment and Phase 2's fixture-backed parser/output validation are complete; see [phase-1-test-environment.md](phase-1-test-environment.md) and [phase-2-parser-validation.md](phase-2-parser-validation.md). Phase 3 is complete for the approved scope: CDB and direct-PDB capture/parser paths were verified on Oracle 19.3 / SQL*Plus 19.3 / R 4.6.1. The tested PDB does not produce `DF_IO_WAIT_HIST`; investigation is deferred to a future release and is not a gate for this release. The current separate CDB and PDB capture entrypoints will be retained; consolidation is out of scope. See [phase-3-oracle19c-validation.md](phase-3-oracle19c-validation.md). Phase 4 documentation and safe local packaging preparation are complete; no package artifact or release was created. See [phase-4-docs-release-prep.md](phase-4-docs-release-prep.md). R 4.6.1 remains the approved and tested release floor/target; R 4.6.2 was released on 2026-10-29 but has not been tested for AWR-Miner. Oracle Database 19c is the only database target, with both CDB-level and PDB-level AWR in scope. The user has authorized unrestricted database work on the dedicated test targets and confirmed Diagnostic Pack licensing; the earlier Phase 0 SELECT-only boundary is superseded for Phase 3.
 
 ## Goal
 
@@ -91,7 +91,7 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 - Acceptance: documentation matches tested support, release artifacts are locally reviewable, and no remote Git action occurs without explicit approval.
 - Risk and rollback: preserve existing release snapshots; discard only newly generated, unapproved artifacts.
 
-**Status:** Ready to begin. Scope, initial documentation gaps, acceptance checks, and packaging hazards are recorded in [phase-4-docs-release-prep.md](phase-4-docs-release-prep.md).
+**Status:** Complete for documentation and local packaging preparation. No package was created or published. See [phase-4-docs-release-prep.md](phase-4-docs-release-prep.md).
 
 ## Decisions Before Implementation
 
@@ -102,4 +102,4 @@ The full parser dependency lock and digest-pinned Docker environment are impleme
 
 ## Next Action
 
-Phases 0 through 3 are complete for the approved scope. Continue Phase 4 using [phase-4-docs-release-prep.md](phase-4-docs-release-prep.md): document authority and packaging remain open after the initial root README update. The PDB I/O-wait-histogram gap remains a known limitation deferred to a future release, not a blocker for Phase 4.
+Phases 0 through 4 are complete for the approved scope. Any actual packaging, release, or publication requires separate authorization. R 4.6.2 remains untested for AWR-Miner, and the PDB I/O-wait-histogram gap remains deferred to a future release.

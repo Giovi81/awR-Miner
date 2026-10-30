@@ -1,13 +1,14 @@
 # Phase 4 Documentation and Release Preparation
 
-**Status:** In progress (started 2026-10-26). Phase 3 is formally complete for its approved scope; the PDB I/O-wait-histogram gap is deferred to a future release. This plan prepares documentation and a safe local packaging procedure. It does not authorize a release, database access, commits, tags, or pushes.
+**Status:** Complete for documentation and local packaging preparation (2026-10-30). No package artifact or release was created. Phase 3 is formally complete for its approved scope; the PDB I/O-wait-histogram gap is deferred to a future release. This work does not authorize database access, commits, tags, or pushes.
 
 ## Progress
 
-- Verified on 2026-10-26 from R Project news and CRAN that R 4.6.1 remains the latest stable release; R 4.6.2 is scheduled for 2026-10-29 and is not tested for AWR-Miner. Oracle's 19c licensing manual lists AWR under Oracle Diagnostics Pack.
-- Updated the root README to replace the stale Oracle 10.1+/R 3.x+ claims with the tested versions, CDB/PDB capture paths, licensing/access caveats, the deferred PDB histogram limitation, and the offline Docker parser test reference.
+- Verified on 2026-10-30 from the CRAN R sources page that R 4.6.2 was released on 2026-10-29; it is not tested for AWR-Miner. The latest tested version remains R 4.6.1. Oracle's 19c licensing manual lists AWR under Oracle Diagnostics Pack (checked 2026-10-26).
+- Updated the root README with the tested versions, the current R release fact, CDB/PDB capture paths, licensing/access caveats, the deferred PDB histogram limitation, and the offline Docker parser test reference.
+- Identified the root README as the current operator guide and marked `doc/readme_awr_miner.html` and `doc/awr_miner.sql` as historical 2.9 documents. The settings options in the README remain documented because they are present in the active parser/settings code.
 - Built the pinned Phase 2 Docker test image and passed `tests/phase2-parser.R` offline after the README update.
-- Still open: decide how to label or maintain the legacy HTML guide, document a safe local packaging procedure, and complete the documentation consistency review. No package artifacts or release have been created.
+- Documented a local-only staging and review procedure below. Ant packaging was inspected but not run; no package artifacts or release have been created.
 
 ## Objective
 
@@ -26,19 +27,18 @@ Out of scope: changing capture/parser behavior, investigating the deferred PDB m
 
 ## Initial Documentation Gaps
 
-- Root `README.md` still says Oracle 10.1+ and R 3.x+, and its basic workflow assumes RStudio. These claims and steps need replacement or qualification against the tested scope.
-- `doc/readme_awr_miner.html` is a legacy 2.9 document with old Oracle licensing links and workflow details; decide whether it is maintained, regenerated, or explicitly marked historical.
-- `doc/awr_miner.sql` is an older capture snapshot. Do not silently present it as the current `source/` implementation.
+- At the start of Phase 4, the root `README.md` still said Oracle 10.1+ and R 3.x+ and assumed an RStudio workflow. The current README now documents tested scope and script-based usage; its supported settings options remain documented.
+- `doc/readme_awr_miner.html` and `doc/awr_miner.sql` are historical 2.9 documents, now labeled as such. The current operator instructions and capture entrypoints are in the root README and `source/`.
 - The Phase 0 baseline records required AWR views but does not establish a least-privilege grant recipe. Document this limitation and request DBA review rather than recommending broad grants.
 - The default Ant `build` target is unsafe for ordinary validation: it checks out README content, increments the build number, edits active version metadata, moves release artifacts, and invokes Git add/commit/tag/push targets.
 
 ## Work Plan
 
 1. [x] Verify current R and Oracle documentation facts against primary sources before updating support statements; record the check date and exact tested versions.
-2. [ ] Confirm which user-facing docs are authoritative and map each instruction to the active `source/` scripts and pinned tests.
-3. [ ] Draft setup, capture prerequisites/licensing, tested compatibility, limitations, and fixture-test instructions. Keep database integration results separate from offline parser checks.
-4. [ ] Inspect Ant dependencies and specify a local packaging approach that works on an isolated copy or uses explicit non-release targets. Do not invoke the default `build` target.
-5. [ ] Review the resulting docs and packaging instructions for consistency, stale version claims, unverified grants, data handling, and accidental release side effects.
+2. [x] Confirm which user-facing docs are authoritative and map current instructions to active `source/` scripts and pinned tests.
+3. [x] Document setup, capture prerequisites/licensing, tested compatibility, limitations, and fixture-test instructions. Keep database integration results separate from offline parser checks.
+4. [x] Inspect Ant targets and document local-only staging/review without invoking release targets.
+5. [x] Review the resulting docs for stale version claims, unverified grants, data handling, and accidental release side effects.
 
 ## Acceptance Criteria
 
@@ -56,3 +56,15 @@ Out of scope: changing capture/parser behavior, investigating the deferred PDB m
 - Do not run Ant's default `build` target. No R, package manager, Java/Ant, or other development tool may be installed on the host.
 - Preserve user changes and any local AWR-derived artifacts. Do not add database captures or parsed outputs to documentation or release artifacts.
 - Roll back only newly introduced documentation edits if rejected; leave historical releases and pre-existing user changes untouched.
+
+## Safe Local Packaging Procedure
+
+This procedure prepares a reviewable staging directory only. It was not executed, and no archive or release was created.
+
+1. Work in a new disposable staging directory outside the repository's `source/`, `release/`, and `build/` paths.
+2. Copy only an explicitly reviewed allowlist of current runtime files: `README.md`, `source/R-AWR-Mining.R`, `source/awr_miner.sql`, and `source/awr_miner_pdb.sql`. Add other user-facing files only after confirming they are current and required.
+3. Exclude `release/`, `build/`, `test-cases/`, `source/test-files-Nov-1/`, `source/1-offs/`, local settings, and all capture or generated-data files, including `.out`, `.gz`, `.Rda`, `.pdf`, and generated `.csv` files.
+4. Review the staged file manifest and confirm no capture data or generated output is present. If an archive is later required, create it only with an approved digest-pinned container tool after its availability and command are verified.
+5. Keep the staged artifact local for review. Publishing it or performing any Git commit, tag, or push requires separate authorization.
+
+Do not use the Ant `build` target: it checks out the README from `origin`, increments build metadata, edits active source version fields, moves files into `release/`, prompts for a commit, and invokes Git add/commit/tag/push. The `copy-to-build` target is also not a suitable package shortcut: it clears `build/` and copies the legacy sample output archive and HTML guide.
